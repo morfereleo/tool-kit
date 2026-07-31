@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  /* ——— Brand palette: warm sepia (light default) ——— */
+  :root {
+    --paper: 247 242 233;
+    --ink: 41 33 25;
+    --inksoft: 107 95 81;
+    --inkmuted: 163 151 131;
+    --line: 228 218 202;
+  }
+
+  /* ——— Dark theme: warm sepia night ——— */
+  .dark {
+    --paper: 34 27 19;
+    --ink: 243 235 220;
+    --inksoft: 200 187 166;
+    --inkmuted: 141 127 106;
+    --line: 59 50 38;
+    --dark-panel: #2b2317;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-paper text-ink;
+  }
+}
+
+@layer components {
+  /* ——— Form system: boxed fields with per-tool accent focus ——— */
+  .field-label {
+    @apply mb-2 block font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft;
+  }
+  .field-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 8px;
+    border-radius: 2px;
+    background: var(--facc, #a39783);
+    vertical-align: 1px;
+  }
+
+  .field-box {
+    @apply w-full rounded-xl border border-line bg-white px-4 py-2.5 text-[15px] text-ink shadow-sm transition-all placeholder:text-inkmuted/60 hover:border-inkmuted focus:outline-none;
+  }
+  .field-box:focus {
+    border-color: var(--facc, #292119);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--facc, #292119) 16%, transparent);
+  }
+  .dark .field-box {
+    @apply bg-paper shadow-none;
+  }
+  .dark .field-box:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--facc, #f3ebdc) 26%, transparent);
+  }
+
+  .field-box-dark {
+    @apply w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-[15px] text-white transition-all placeholder:text-white/30 hover:border-white/30 focus:outline-none;
+  }
+  .field-box-dark:focus {
+    border-color: var(--facc, #9fb2ff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--facc, #9fb2ff) 28%, transparent);
+  }
+}
