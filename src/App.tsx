@@ -7,6 +7,7 @@ import ImagenesPage from '@/pages/ImagenesPage'
 import QrPage from '@/pages/QrPage'
 import ServiciosPage from '@/pages/ServiciosPage'
 import AcuerdoPage from '@/pages/AcuerdoPage'
+import TextoPage from '@/pages/TextoPage'
 
 function App() {
   const route = useHashRoute()
@@ -30,6 +31,9 @@ function App() {
       break
     case '#/acuerdo':
       page = <AcuerdoPage />
+      break
+    case '#/texto':
+      page = <TextoPage />
       break
     default:
       page = <Home />

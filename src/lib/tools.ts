@@ -70,6 +70,16 @@ export const TOOLS: Tool[] = [
     accent: '#DB2777',
     accentInk: '#FFFFFF',
   },
+  {
+    id: 'texto',
+    num: '07',
+    path: '#/texto',
+    name: 'Texto para Redes',
+    shortName: 'Texto',
+    tagline: 'Negritas, cursivas y estilos especiales más emojis, listos para pegar en tus publicaciones.',
+    accent: '#0EA5E9',
+    accentInk: '#FFFFFF',
+  },
 ]
 
 export const BRAND = {
