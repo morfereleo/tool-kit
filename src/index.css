@@ -154,3 +154,12 @@
     transform: translateY(0);
   }
 }
+
+/* Oculta la barra de scroll manteniendo el desplazamiento */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
