@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { BRAND, TOOLS } from '@/lib/tools'
 import { useTheme } from '@/hooks/useTheme'
+import { IconDoc, IconImage, IconQr, IconReceipt, IconTag, IconTrend } from '@/components/icons'
 
 function ThemeToggle() {
   const { theme, toggle } = useTheme()
@@ -55,8 +56,31 @@ export function BrandMark({ className = 'h-8 w-8' }: { className?: string }) {
   )
 }
 
+const MENU_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  iva: IconReceipt,
+  tasas: IconTrend,
+  imagenes: IconImage,
+  qr: IconQr,
+  servicios: IconTag,
+  acuerdo: IconDoc,
+}
+
 export function Header({ current }: { current: string }) {
   const [open, setOpen] = useState(false)
+
+  // Bloquea el scroll de la página y permite cerrar con Escape mientras el menú está abierto
+  useEffect(() => {
+    if (!open) return
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-sm">
@@ -101,22 +125,103 @@ export function Header({ current }: { current: string }) {
       </div>
 
       {open && (
-        <nav className="border-t border-line bg-paper md:hidden">
-          {TOOLS.map((t) => (
-            <a
-              key={t.id}
-              href={t.path}
+        <div
+          className="fixed inset-0 z-[60] flex flex-col overflow-hidden md:hidden"
+          style={{
+            animation: 'menu-fade 0.25s ease-out both',
+            background: 'radial-gradient(130% 100% at 100% 0%, #2b2317 0%, #16120c 60%)',
+          }}
+        >
+          {/* Marca de agua del iso */}
+          <img
+            src="/logo-mark-dark.svg"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 select-none opacity-[0.07]"
+          />
+
+          {/* Barra superior del menú */}
+          <div
+            className="relative flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-5"
+            style={{ animation: 'menu-item-in 0.35s ease-out both' }}
+          >
+            <span className="flex items-center gap-2.5">
+              <img src="/logo-mark-dark.svg" alt="" className="h-8 w-8" />
+              <span className="font-grotesk text-lg font-bold tracking-tight text-[#F3EBDC]">Tool Kit</span>
+            </span>
+            <button
               onClick={() => setOpen(false)}
-              className="flex items-center justify-between border-b border-line px-5 py-4 text-base font-medium"
+              className="flex h-9 w-9 items-center justify-center text-[#F3EBDC]"
+              aria-label="Cerrar menú"
             >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs text-inkmuted">{t.num}</span>
-                {t.name}
-              </span>
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: t.accent }} />
-            </a>
-          ))}
-        </nav>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Herramientas con entrada escalonada */}
+          <nav className="relative flex-1 overflow-y-auto">
+            {TOOLS.map((t, i) => {
+              const ItemIcon = MENU_ICONS[t.id]
+              const active = current === t.path
+              return (
+                <a
+                  key={t.id}
+                  href={t.path}
+                  onClick={() => setOpen(false)}
+                  className="group flex items-center gap-4 border-b border-white/10 px-5 py-5"
+                  style={{
+                    animation: 'menu-item-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
+                    animationDelay: `${100 + i * 70}ms`,
+                  }}
+                >
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: `${t.accent}24`,
+                      border: `1px solid ${t.accent}59`,
+                      color: t.accent,
+                    }}
+                  >
+                    {ItemIcon && <ItemIcon className="h-5 w-5" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] font-medium" style={{ color: t.accent }}>
+                        /{t.num}
+                      </span>
+                      <span
+                        className={`font-grotesk text-xl font-bold tracking-tight ${
+                          active ? 'text-[#F3EBDC]' : 'text-[#F3EBDC]/85'
+                        }`}
+                      >
+                        {t.name}
+                      </span>
+                      {active && (
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.accent }} />
+                      )}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[13px] text-[#F3EBDC]/45">{t.tagline}</span>
+                  </span>
+                  <span className="shrink-0 text-[#F3EBDC]/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#F3EBDC]/70">
+                    <ArrowUpRight className="h-5 w-5" />
+                  </span>
+                </a>
+              )
+            })}
+          </nav>
+
+          {/* Firma */}
+          <div
+            className="relative shrink-0 px-5 py-6"
+            style={{ animation: 'menu-item-in 0.5s ease-out both', animationDelay: `${100 + TOOLS.length * 70}ms` }}
+          >
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#F3EBDC]/40">
+              Diseñado por {BRAND.author} — 2026
+            </p>
+          </div>
+        </div>
       )}
     </header>
   )
@@ -161,9 +266,9 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Wordmark gigante cortado por el borde inferior */}
+      {/* Wordmark gigante: completo y con aire en mobile, cortado por el borde inferior en desktop */}
       <div className="relative mx-auto max-w-6xl px-5 md:px-8" aria-hidden>
-        <p className="translate-y-[22%] select-none font-grotesk text-[18vw] font-bold leading-none tracking-tighter text-ink/[0.06] md:text-[13rem]">
+        <p className="translate-y-0 select-none pb-10 font-grotesk text-[18vw] font-bold leading-none tracking-tighter text-ink/[0.06] md:translate-y-[22%] md:pb-0 md:text-[13rem]">
           Tool Kit
         </p>
       </div>

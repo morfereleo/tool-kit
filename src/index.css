@@ -24,7 +24,7 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.625rem;
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 240 5% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -131,5 +131,26 @@
   .field-box-dark:focus {
     border-color: var(--facc, #9fb2ff);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--facc, #9fb2ff) 28%, transparent);
+  }
+}
+
+/* ——— Menú móvil: entrada del overlay y de cada ítem ——— */
+@keyframes menu-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
