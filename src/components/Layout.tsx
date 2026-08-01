@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import { BRAND, TOOLS } from '@/lib/tools'
 import { useTheme } from '@/hooks/useTheme'
-import { IconDoc, IconImage, IconQr, IconReceipt, IconTag, IconTrend } from '@/components/icons'
+import { IconDoc, IconImage, IconQr, IconReceipt, IconSpark, IconTag, IconTrend } from '@/components/icons'
 
 function ThemeToggle() {
   const { theme, toggle } = useTheme()
@@ -64,6 +64,7 @@ const MENU_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   qr: IconQr,
   servicios: IconTag,
   acuerdo: IconDoc,
+  texto: IconSpark,
 }
 
 export function Header({ current }: { current: string }) {
@@ -172,7 +173,7 @@ export function Header({ current }: { current: string }) {
                   key={t.id}
                   href={t.path}
                   onClick={() => setOpen(false)}
-                  className="group relative flex items-center gap-4 overflow-hidden border-b border-white/10 px-5 py-4"
+                  className="group relative flex items-center gap-4 overflow-hidden border-b border-white/10 px-5 py-[22px]"
                   style={{
                     animation: 'menu-item-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
                     animationDelay: `${100 + i * 70}ms`,

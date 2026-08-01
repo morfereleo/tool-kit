@@ -14,6 +14,7 @@ Caja de herramientas gratuitas para freelancers y emprendedores. Todo corre 100%
 | 04 | **Generador de QR** | QR personalizados con plantillas de color, medidor de contraste en tiempo real, logo opcional al centro (corrección de errores alta) y exportación PNG/SVG |
 | 05 | **Cotizador de servicios** | 4 modelos de cotización (por fases, paquetes, valor percibido y retainer), con persistencia local de cotizaciones y ticket en PNG |
 | 06 | **Acuerdo de servicios** | Documento de contratación con ítems, hitos de pago y firmas con cédula/ID, exportable como documento PNG y guardado local |
+| 07 | **Texto para redes** | Estilos Unicode (negrita, cursiva, gótica, burbujas y 12 más) + selector de emojis con contadores de caracteres para X, Instagram y LinkedIn |
 
 ## Stack
 
