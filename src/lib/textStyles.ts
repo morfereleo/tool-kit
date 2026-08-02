@@ -8,6 +8,15 @@ const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const LOWER = 'abcdefghijklmnopqrstuvwxyz'
 const DIGITS = '0123456789'
 
+/** Mapa inverso: carácter estilizado → ASCII base (para cambiar de un estilo a otro) */
+const REVERSE: Record<string, string> = {}
+
+function register(map: Record<string, string>) {
+  for (const [k, v] of Object.entries(map)) {
+    if (k !== v) REVERSE[v] = k
+  }
+}
+
 function rangeMap(chars: string, start: number): Record<string, string> {
   const m: Record<string, string> = {}
   for (let i = 0; i < chars.length; i++) m[chars[i]] = String.fromCodePoint(start + i)
@@ -21,23 +30,26 @@ function styled(
   digits?: number,
   extra: Record<string, string> = {}
 ) {
-  const map: Record<string, string> = { ...extra }
+  const map: Record<string, string> = {}
   if (upper !== undefined) Object.assign(map, rangeMap(UPPER, upper))
   if (lower !== undefined) Object.assign(map, rangeMap(LOWER, lower))
   if (digits !== undefined) Object.assign(map, rangeMap(DIGITS, digits))
+  Object.assign(map, extra) // las excepciones pisan los huecos del rango
+  register(map)
   return (text: string) => text.replace(/[A-Za-z0-9]/g, (c) => map[c] ?? c)
 }
 
 /** Small caps: solo las minúsculas tienen equivalentes; las mayúsculas quedan igual */
 const SMALLCAPS_SRC = 'abcdefghijklmnopqrstuvwxyz'
 const SMALLCAPS_DST = [
-  '\u1D00', '\u0299', '\u1D04', '\u1D05', '\u1D07', '\uA730', '\u0262',
-  '\u029C', '\u026A', '\u1D0A', '\u1D0B', '\u029F', '\u1D0D', '\u0274',
-  '\u1D0F', '\u1D18', '\u01EB', '\u0280', '\uA731', '\u1D1B', '\u1D1C',
-  '\u1D20', '\u1D21', 'x', '\u028F', '\u1D22',
+  'ᴀ', 'ʙ', 'ᴄ', 'ᴅ', 'ᴇ', 'ꜰ', 'ɢ',
+  'ʜ', 'ɪ', 'ᴊ', 'ᴋ', 'ʟ', 'ᴍ', 'ɴ',
+  'ᴏ', 'ᴘ', 'ǫ', 'ʀ', 'ꜱ', 'ᴛ', 'ᴜ',
+  'ᴠ', 'ᴡ', 'x', 'ʏ', 'ᴢ',
 ]
 const SMALLCAPS_MAP: Record<string, string> = {}
 for (let i = 0; i < SMALLCAPS_SRC.length; i++) SMALLCAPS_MAP[SMALLCAPS_SRC[i]] = SMALLCAPS_DST[i]
+register(SMALLCAPS_MAP)
 
 /** Agrega una marca combinante (tachado, subrayado) después de cada carácter visible */
 const combine = (mark: string) => (text: string) =>
@@ -47,8 +59,18 @@ const combine = (mark: string) => (text: string) =>
     .join('')
 
 /** Letras en círculo */
-const CIRCLED_EXTRA: Record<string, string> = { '0': '\u24EA' }
+const CIRCLED_EXTRA: Record<string, string> = { '0': '⓪' }
 for (let i = 1; i <= 9; i++) CIRCLED_EXTRA[String(i)] = String.fromCodePoint(0x2460 + i - 1)
+
+/**
+ * Excepciones del bloque Unicode: algunas letras manuscritas y góticas
+ * no viven en el rango consecutivo sino como símbolos sueltos.
+ */
+const SCRIPT_EXTRA: Record<string, string> = {
+  B: 'ℬ', E: 'ℰ', F: 'ℱ', H: 'ℋ', I: 'ℐ', L: 'ℒ', M: 'ℳ', R: 'ℛ',
+  e: 'ℯ', g: 'ℊ', o: 'ℴ',
+}
+const FRAKTUR_EXTRA: Record<string, string> = { C: 'ℭ', H: 'ℌ', I: 'ℑ', R: 'ℜ', Z: 'ℨ' }
 
 export type TextStyle = {
   id: string
@@ -86,7 +108,7 @@ export const TEXT_STYLES: TextStyle[] = [
     id: 'serif-italic',
     label: 'Serif cursiva',
     hint: 'Sutil y clásica',
-    apply: styled(0x1d434, 0x1d44e, undefined, { h: '\u210E' }),
+    apply: styled(0x1d434, 0x1d44e, undefined, { h: 'ℎ' }),
   },
   {
     id: 'serif-bold-italic',
@@ -98,19 +120,19 @@ export const TEXT_STYLES: TextStyle[] = [
     id: 'script',
     label: 'Manuscrita',
     hint: 'Caligrafía delicada',
-    apply: styled(0x1d4d0, 0x1d4ea),
+    apply: styled(0x1d49c, 0x1d4b6, undefined, SCRIPT_EXTRA),
   },
   {
     id: 'script-bold',
     label: 'Manuscrita negrita',
     hint: 'Firma con presencia',
-    apply: styled(0x1d504, 0x1d51e),
+    apply: styled(0x1d4d0, 0x1d4ea),
   },
   {
     id: 'fraktur',
     label: 'Gótica',
     hint: 'Estilo antiguo',
-    apply: styled(0x1d51c, 0x1d536),
+    apply: styled(0x1d504, 0x1d51c, undefined, FRAKTUR_EXTRA),
   },
   {
     id: 'mono',
@@ -123,13 +145,13 @@ export const TEXT_STYLES: TextStyle[] = [
     label: 'Doble trazo',
     hint: 'Geométrica y moderna',
     apply: styled(0x1d538, 0x1d552, 0x1d7d8, {
-      C: '\u2102',
-      H: '\u210D',
-      N: '\u2115',
-      P: '\u2119',
-      Q: '\u211A',
-      R: '\u211D',
-      Z: '\u2124',
+      C: 'ℂ',
+      H: 'ℍ',
+      N: 'ℕ',
+      P: 'ℙ',
+      Q: 'ℚ',
+      R: 'ℝ',
+      Z: 'ℤ',
     }),
   },
   {
@@ -154,13 +176,13 @@ export const TEXT_STYLES: TextStyle[] = [
     id: 'strike',
     label: 'Tachado',
     hint: 'Para correcciones con humor',
-    apply: combine('\u0336'),
+    apply: combine('̶'),
   },
   {
     id: 'underline',
     label: 'Subrayado',
     hint: 'Resalta sin gritar',
-    apply: combine('\u0332'),
+    apply: combine('̲'),
   },
 ]
 
@@ -236,4 +258,17 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
 /** Cuenta caracteres de forma segura con emojis (por code point, no por unidad UTF-16) */
 export function charCount(text: string): number {
   return Array.from(text).length
+}
+
+const COMBINING_MARKS = /[̶̲]/g
+
+/**
+ * Revierte los caracteres estilizados a su ASCII base y quita las marcas
+ * combinantes (tachado/subrayado). Permite cambiar un fragmento de un
+ * estilo a otro sin que se acumulen caracteres raros.
+ */
+export function unstyle(text: string): string {
+  return Array.from(text.replace(COMBINING_MARKS, ''))
+    .map((c) => REVERSE[c] ?? c)
+    .join('')
 }

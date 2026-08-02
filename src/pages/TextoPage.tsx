@@ -1,13 +1,41 @@
 import { useRef, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import { TOOLS } from '@/lib/tools'
-import { EMOJI_GROUPS, TEXT_STYLES, charCount, type TextStyle } from '@/lib/textStyles'
+import { EMOJI_GROUPS, TEXT_STYLES, charCount, unstyle, type TextStyle } from '@/lib/textStyles'
 import { IconCheck, IconSpark } from '@/components/icons'
 
 const LIMITS = [
   { id: 'x', label: 'X / Twitter', max: 280 },
   { id: 'ig', label: 'Instagram', max: 2200 },
   { id: 'li', label: 'LinkedIn', max: 3000 },
+]
+
+const GENERATIONS = [
+  {
+    name: 'Baby Boomers',
+    years: '1946–1964',
+    tip: 'Buscan claridad y confianza: frases completas, buena ortografía y beneficios concretos. Evita la jerga, los memes y el exceso de emojis.',
+  },
+  {
+    name: 'Generación X',
+    years: '1965–1980',
+    tip: 'Prácticos y escépticos: sé directo, honesto y sin exageraciones. Funcionan los datos, las comparaciones y el humor sutil.',
+  },
+  {
+    name: 'Millennials',
+    years: '1981–1996',
+    tip: 'Conectan con la autenticidad y el propósito: cuenta historias, muestra el por qué de tu marca y usa un tono cercano pero profesional.',
+  },
+  {
+    name: 'Generación Z · Centennials',
+    years: '1997–2012',
+    tip: 'Ultra-directos y visuales: frases cortas, humor, emojis y lenguaje inclusivo. Huyen de todo lo que suena a publicidad tradicional.',
+  },
+  {
+    name: 'Generación Alpha',
+    years: '2013 en adelante',
+    tip: 'Nativos digitales: contenido breve, visual e interactivo. Ten en cuenta que la compra suele decidirla un adulto de la casa.',
+  },
 ]
 
 function LimitChip({ label, max, len }: { label: string; max: number; len: number }) {
@@ -66,8 +94,10 @@ export default function TextoPage() {
       start = 0
       end = text.length
     }
-    const styled = s.apply(text.slice(start, end))
-    if (styled === text.slice(start, end) && !whole) return
+    const slice = text.slice(start, end)
+    // unstyle() revierte cualquier estilo previo para que el nuevo se aplique limpio
+    const styled = s.apply(unstyle(slice))
+    if (styled === slice && !whole) return
     const next = text.slice(0, start) + styled + text.slice(end)
     setText(next)
     requestAnimationFrame(() => {
@@ -128,6 +158,47 @@ export default function TextoPage() {
               <label htmlFor="copy-input" className="field-label">
                 Tu copy
               </label>
+
+              {/* Barra de herramientas */}
+              <div className="no-scrollbar flex items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-white p-2 shadow-sm dark:bg-paper">
+                {TEXT_STYLES.map((s) => {
+                  const active = lastStyle === s.id
+                  return (
+                    <button
+                      key={s.id}
+                      onPointerDown={keepFocus}
+                      onClick={() => applyStyle(s)}
+                      disabled={!hasText}
+                      title={s.hint}
+                      className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-[13px] leading-none transition-all ${
+                        active
+                          ? 'text-white'
+                          : hasText
+                            ? 'text-ink hover:bg-paper dark:hover:bg-white/5'
+                            : 'text-inkmuted/50'
+                      }`}
+                      style={active ? { backgroundColor: tool.accent } : undefined}
+                    >
+                      {s.apply(s.label)}
+                    </button>
+                  )
+                })}
+                <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-line" />
+                <button
+                  onPointerDown={keepFocus}
+                  onClick={() => setShowEmoji(!showEmoji)}
+                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-[13px] font-medium leading-none transition-all ${
+                    showEmoji
+                      ? 'text-white'
+                      : 'text-inksoft hover:bg-paper dark:hover:bg-white/5'
+                  }`}
+                  style={showEmoji ? { backgroundColor: tool.accent } : undefined}
+                >
+                  <IconSpark className="h-4 w-4" />
+                  Emojis
+                </button>
+              </div>
+
               <textarea
                 id="copy-input"
                 ref={taRef}
@@ -139,89 +210,14 @@ export default function TextoPage() {
                 onSelect={syncSelection}
                 onKeyUp={syncSelection}
                 onMouseUp={syncSelection}
-                rows={8}
+                rows={9}
                 placeholder="Escribe o pega aquí el texto de tu publicación…"
-                className="field-box resize-y leading-relaxed"
+                className="field-box mt-2.5 resize-y leading-relaxed"
               />
-
-              {/* Barra de estilos */}
-              <div className="mt-4">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft">
-                  Estilos — toca para aplicar
-                </p>
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  {TEXT_STYLES.map((s) => {
-                    const active = lastStyle === s.id
-                    return (
-                      <button
-                        key={s.id}
-                        onPointerDown={keepFocus}
-                        onClick={() => applyStyle(s)}
-                        disabled={!hasText}
-                        title={s.hint}
-                        className={`rounded-full border px-3.5 py-2 text-[14px] leading-none transition-all ${
-                          active
-                            ? 'border-transparent text-white'
-                            : hasText
-                              ? 'border-line bg-white text-ink hover:-translate-y-0.5 hover:border-inkmuted hover:shadow-sm dark:bg-paper'
-                              : 'border-line/60 text-inkmuted/60'
-                        }`}
-                        style={active ? { backgroundColor: tool.accent } : undefined}
-                      >
-                        {s.apply(s.label)}
-                      </button>
-                    )
-                  })}
-                </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-inkmuted">
-                  Selecciona un fragmento del texto y toca un estilo: solo esa parte cambia. Si no
-                  seleccionas nada, se aplica a todo el copy.
-                </p>
-              </div>
-
-              {/* Contadores + acciones */}
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                {LIMITS.map((l) => (
-                  <LimitChip key={l.id} label={l.label} max={l.max} len={len} />
-                ))}
-                <span className="flex-1" />
-                <button
-                  onPointerDown={keepFocus}
-                  onClick={() => setShowEmoji(!showEmoji)}
-                  className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-all ${
-                    showEmoji
-                      ? 'border-transparent text-white'
-                      : 'border-line bg-white text-inksoft hover:border-inkmuted dark:bg-paper'
-                  }`}
-                  style={showEmoji ? { backgroundColor: tool.accent } : undefined}
-                >
-                  <IconSpark className="h-4 w-4" />
-                  Emojis
-                </button>
-                {hasText && (
-                  <>
-                    <button
-                      onClick={copyAll}
-                      className="flex items-center gap-2 rounded-full border border-transparent px-4 py-1.5 text-[13px] font-medium text-white transition-all"
-                      style={{ backgroundColor: tool.accent }}
-                    >
-                      {copied ? (
-                        <>
-                          <IconCheck className="h-4 w-4" /> ¡Copiado!
-                        </>
-                      ) : (
-                        'Copiar texto'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setText('')}
-                      className="rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-inksoft transition-colors hover:border-inkmuted hover:text-ink dark:bg-paper"
-                    >
-                      Limpiar
-                    </button>
-                  </>
-                )}
-              </div>
+              <p className="mt-2 text-[12px] leading-relaxed text-inkmuted">
+                Selecciona un fragmento y toca un estilo de la barra: solo esa parte cambia. Para
+                cambiarlo, vuelve a seleccionarlo y toca el nuevo estilo.
+              </p>
 
               {/* Panel de emojis */}
               {showEmoji && (
@@ -264,6 +260,37 @@ export default function TextoPage() {
                   </p>
                 </div>
               )}
+
+              {/* Contadores + acciones */}
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {LIMITS.map((l) => (
+                  <LimitChip key={l.id} label={l.label} max={l.max} len={len} />
+                ))}
+                <span className="flex-1" />
+                {hasText && (
+                  <>
+                    <button
+                      onClick={copyAll}
+                      className="flex items-center gap-2 rounded-full border border-transparent px-4 py-1.5 text-[13px] font-medium text-white transition-all"
+                      style={{ backgroundColor: tool.accent }}
+                    >
+                      {copied ? (
+                        <>
+                          <IconCheck className="h-4 w-4" /> ¡Copiado!
+                        </>
+                      ) : (
+                        'Copiar texto'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setText('')}
+                      className="rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-inksoft transition-colors hover:border-inkmuted hover:text-ink dark:bg-paper"
+                    >
+                      Limpiar
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Consejos */}
@@ -275,11 +302,11 @@ export default function TextoPage() {
                 <ul className="mt-4 space-y-3 text-sm leading-relaxed text-inksoft">
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
-                    Selecciona la parte del texto que quieras destacar y toca un estilo: solo ese fragmento cambia, el resto queda igual.
+                    Usa la barra de herramientas: selecciona un fragmento del texto y toca un estilo — solo esa parte cambia, el resto queda igual.
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
-                    Combina estilos en un mismo copy: el título en negrita, una frase en cursiva, una palabra tachada o en burbujas.
+                    ¿Quieres otro estilo en el mismo fragmento? Vuelve a seleccionarlo y toca el nuevo: se reemplaza sin problema. Combina varios estilos en un mismo copy.
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
@@ -295,6 +322,32 @@ export default function TextoPage() {
                     úsalos con moderación — los lectores de pantalla no siempre interpretan bien estos caracteres. Ideal para titulares y frases cortas.
                   </span>
                 </div>
+              </div>
+
+              {/* Guía por generación */}
+              <div className="mt-4 rounded-2xl border border-line bg-white p-6 dark:bg-paper">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft">
+                  Escribe para cada generación
+                </p>
+                <p className="mt-3 text-[13px] leading-relaxed text-inksoft">
+                  El mismo mensaje no funciona igual para todos. Ajusta el lenguaje de tu copy
+                  según la generación a la que le hablas:
+                </p>
+                <ul className="mt-4 space-y-4">
+                  {GENERATIONS.map((g) => (
+                    <li key={g.name}>
+                      <p className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-sm font-semibold text-ink">{g.name}</span>
+                        <span className="font-mono text-[11px] text-inkmuted">{g.years}</span>
+                      </p>
+                      <p className="mt-1 text-[13px] leading-relaxed text-inksoft">{g.tip}</p>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4 border-t border-line pt-3 text-[12px] leading-relaxed text-inkmuted">
+                  Combínalo con los estilos y emojis de la barra: manuscrita o burbujas para
+                  audiencias jóvenes, serif para un tono más formal.
+                </p>
               </div>
             </aside>
           </div>
