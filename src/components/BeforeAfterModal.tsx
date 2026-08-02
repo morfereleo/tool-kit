@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fmtBytes } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 
 /**
  * Comparador antes/después con slider arrastrable (mouse + touch).
@@ -23,6 +24,7 @@ export default function BeforeAfterModal({
   onClose: () => void
 }) {
   const [pos, setPos] = useState(50)
+  const t = useT()
   const trackRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
 
@@ -76,7 +78,7 @@ export default function BeforeAfterModal({
           <button
             onClick={onClose}
             className="ml-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label="Cerrar"
+            aria-label={t('ui.close')}
           >
             ✕
           </button>
@@ -93,12 +95,12 @@ export default function BeforeAfterModal({
             }}
           >
             {/* optimizada (fondo completo) */}
-            <img src={webpUrl} alt="Optimizada WebP" className="block h-auto w-full" draggable={false} />
+            <img src={webpUrl} alt={t('img.downloadOne')} className="block h-auto w-full" draggable={false} />
             {/* original recortada */}
             <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
               <img
                 src={originalUrl}
-                alt="Original"
+                alt={t('compare.original')}
                 className="block h-auto max-w-none"
                 style={{ width: trackRef.current?.clientWidth ?? '100%' }}
                 draggable={false}
@@ -106,7 +108,7 @@ export default function BeforeAfterModal({
             </div>
             {/* etiquetas */}
             <span className="absolute left-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-paper">
-              Original
+              {t('compare.original')}
             </span>
             <span
               className="absolute right-3 top-3 rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white"
@@ -125,7 +127,7 @@ export default function BeforeAfterModal({
             </div>
           </div>
           <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
-            Arrastra el divisor (o usa ← →) para comparar la original con la optimizada
+            {t('compare.hint')}
           </p>
         </div>
       </div>

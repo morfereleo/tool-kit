@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { TaxNote } from '@/lib/taxNotes'
+import { useT } from '@/lib/i18n'
 
 export default function InfoNote({
   note,
@@ -15,6 +16,7 @@ export default function InfoNote({
   accent: string
 }) {
   const [open, setOpen] = useState(false)
+  const t = useT()
   const expanded = highlight || open
   const bullets = mode === 'add' ? note.add : note.extract
 
@@ -49,9 +51,11 @@ export default function InfoNote({
           <span className="block text-xs text-inksoft">
             {expanded
               ? highlight
-                ? 'Lee esto la primera vez — toca para minimizar'
-                : 'Toca para minimizar'
-              : `¿Por qué ${mode === 'add' ? 'se agrega' : 'se extrae'} este impuesto? Toca para saber`}
+                ? t('note.firstTime')
+                : t('note.minimize')
+              : mode === 'add'
+                ? t('note.whyAdd')
+                : t('note.whyExtract')}
           </span>
         </span>
         <svg
@@ -76,7 +80,7 @@ export default function InfoNote({
             ))}
           </ul>
           <p className="mt-4 font-mono text-[10px] uppercase tracking-wider text-inkmuted">
-            Fuente: {note.source}
+            {t('note.source')} {note.source}
           </p>
         </div>
       )}

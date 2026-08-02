@@ -1,18 +1,46 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
-import { BRAND, TOOLS } from '@/lib/tools'
+import { BRAND, TOOLS, toolText } from '@/lib/tools'
+import { useLang, useT } from '@/lib/i18n'
 import { useTheme } from '@/hooks/useTheme'
 import { IconDoc, IconImage, IconQr, IconReceipt, IconSpark, IconTag, IconTrend } from '@/components/icons'
 
+function LangToggle() {
+  const { lang, setLang } = useLang()
+  const t = useT()
+  return (
+    <div
+      className="flex items-center rounded-full border border-line bg-paper p-1"
+      role="group"
+      aria-label={t('ui.lang')}
+      title={t('ui.lang')}
+    >
+      {(['es', 'en'] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          className={`flex h-7 items-center justify-center rounded-full px-2.5 font-mono text-[11px] font-medium uppercase tracking-wide transition-colors ${
+            lang === l ? 'bg-ink text-paper' : 'text-inkmuted hover:text-ink'
+          }`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function ThemeToggle() {
   const { theme, toggle } = useTheme()
+  const t = useT()
   const dark = theme === 'dark'
   return (
     <button
       onClick={toggle}
       className="flex items-center gap-1 rounded-full border border-line bg-paper p-1 transition-colors hover:border-inkmuted"
-      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      title={dark ? 'Modo claro' : 'Modo oscuro'}
+      aria-label={dark ? t('ui.toLight') : t('ui.toDark')}
+      title={dark ? t('ui.light') : t('ui.dark')}
     >
       <span
         className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
@@ -69,6 +97,8 @@ const MENU_ICONS: Record<string, ComponentType<{ className?: string }>> = {
 
 export function Header({ current }: { current: string }) {
   const [open, setOpen] = useState(false)
+  const { lang } = useLang()
+  const t = useT()
 
   // Bloquea el scroll de la página y permite cerrar con Escape mientras el menú está abierto
   useEffect(() => {
@@ -105,17 +135,18 @@ export function Header({ current }: { current: string }) {
                 className="inline-block h-1.5 w-1.5 rounded-full transition-transform group-hover:scale-150"
                 style={{ backgroundColor: t.accent }}
               />
-              {t.shortName}
+              {toolText(t, lang).shortName}
             </a>
           ))}
         </nav>
 
         <div className="flex items-center gap-3">
+          <LangToggle />
           <ThemeToggle />
           <button
             onClick={() => setOpen(!open)}
             className="flex h-9 w-9 items-center justify-center md:hidden"
-            aria-label="Menú"
+            aria-label={t('ui.menu')}
           >
           <div className="space-y-1.5">
             <span className={`block h-0.5 w-5 bg-ink transition-transform ${open ? 'translate-y-2 rotate-45' : ''}`} />
@@ -155,7 +186,7 @@ export function Header({ current }: { current: string }) {
             <button
               onClick={() => setOpen(false)}
               className="flex h-9 w-9 items-center justify-center text-[#F3EBDC]"
-              aria-label="Cerrar menú"
+              aria-label={t('ui.closeMenu')}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
                 <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
@@ -204,13 +235,13 @@ export function Header({ current }: { current: string }) {
                           active ? 'text-[#F3EBDC]' : 'text-[#F3EBDC]/85'
                         }`}
                       >
-                        {t.name}
+                        {toolText(t, lang).name}
                       </span>
                       {active && (
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.accent }} />
                       )}
                     </span>
-                    <span className="mt-0.5 block truncate text-[13px] text-[#F3EBDC]/45">{t.tagline}</span>
+                    <span className="mt-0.5 block truncate text-[13px] text-[#F3EBDC]/45">{toolText(t, lang).tagline}</span>
                   </span>
                   <span className="relative shrink-0 text-[#F3EBDC]/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#F3EBDC]/70">
                     <ArrowUpRight className="h-5 w-5" />
@@ -227,6 +258,7 @@ export function Header({ current }: { current: string }) {
 }
 
 export function Footer() {
+  const t = useT()
   return (
     <footer className="relative overflow-hidden border-t border-line">
       {/* Marca de agua: el iso a gran escala — arriba a la derecha en mobile, abajo en desktop */}
@@ -251,7 +283,7 @@ export function Footer() {
         </a>
         <div className="text-sm text-inksoft md:text-right">
           <p>
-            Diseñado por{' '}
+            {t('footer.designedBy')}{' '}
             <a
               href={BRAND.url}
               target="_blank"
@@ -276,7 +308,7 @@ export function Footer() {
       <div className="relative border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-5 font-mono text-[11px] uppercase tracking-[0.18em] text-inkmuted md:flex-row md:items-center md:justify-between md:px-8">
           <span>© 2026 · {BRAND.author}</span>
-          <span>Herramientas gratuitas — sin registro, sin letra pequeña</span>
+          <span>{t('footer.tagline')}</span>
         </div>
       </div>
     </footer>

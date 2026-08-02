@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import type { Tool } from '@/lib/tools'
+import { toolText, type Tool } from '@/lib/tools'
+import { useLang, useT } from '@/lib/i18n'
 import { useTheme } from '@/hooks/useTheme'
 
 /**
@@ -17,6 +18,9 @@ export default function BrandShell({
   children: ReactNode
 }) {
   const { theme } = useTheme()
+  const { lang } = useLang()
+  const t = useT()
+  const tt = toolText(tool, lang)
   const isDark = theme === 'dark'
   const strong = tool.accentInk === '#FFFFFF'
   const softInk = soft ?? tool.accent
@@ -45,7 +49,7 @@ export default function BrandShell({
             href="#/"
             className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-inkmuted transition-colors hover:text-ink"
           >
-            ← Volver al índice
+            {t('shell.back')}
           </a>
           <div className="mt-8 flex items-start gap-5 md:gap-7">
             <span
@@ -60,10 +64,10 @@ export default function BrandShell({
             </span>
             <div>
               <h1 className="font-grotesk text-4xl font-bold tracking-tighter md:text-6xl">
-                {tool.name}
+                {tt.name}
               </h1>
               <p className="mt-2 max-w-xl text-balance text-base text-inksoft md:text-lg">
-                {tool.tagline}
+                {tt.tagline}
               </p>
             </div>
           </div>
