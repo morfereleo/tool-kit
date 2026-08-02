@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
+import { useLang, useT } from '@/lib/i18n'
+
+type TFn = (k: string, v?: Record<string, string | number>) => string
 
 export type DocumentData = {
   client: string
@@ -42,7 +45,7 @@ function wrapText(ctx: Ctx, text: string, maxWidth: number): string[] {
 }
 
 /** Dibuja el documento completo en canvas. Devuelve la altura total usada. */
-function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
+function layout(ctx: Ctx, d: DocumentData, draw: boolean, t: TFn): number {
   const W = 820
   const M = 64 // margen lateral
   const CW = W - M * 2
@@ -64,7 +67,7 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
     ctx.fillRect(0, 0, W, 10 * S)
   }
   y += 30
-  y += text('ACUERDO DE PRESTACIÓN DE SERVICIOS', M, y, `700 ${15 * S}px "Space Grotesk", sans-serif`, INK, CW, 20 * S)
+  y += text(t('ac.docTitle'), M, y, `700 ${15 * S}px "Space Grotesk", sans-serif`, INK, CW, 20 * S)
   y += 4
   ctx.font = `500 ${9 * S}px "IBM Plex Mono", monospace`
   ctx.fillStyle = MUTED
@@ -77,9 +80,14 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
   y += 22 * S
 
   // ——— partes ———
-  const cName = d.client || 'el Contratante'
-  const pName = d.provider || 'el Prestador'
-  const parties = `Entre ${cName}${d.clientId ? ` (${d.clientId})` : ''}, en adelante «el Cliente», y ${pName}${d.providerId ? ` (${d.providerId})` : ''}, en adelante «el Prestador», se acuerda la prestación del servicio descrito bajo las siguientes condiciones:`
+  const theClient = t('ac.theClient')
+  const theProvider = t('ac.theProvider')
+  const cName = d.client || theClient
+  const pName = d.provider || theProvider
+  const parties = t('doc.parties', {
+    client: `${cName}${d.clientId ? ` (${d.clientId})` : ''}`,
+    provider: `${pName}${d.providerId ? ` (${d.providerId})` : ''}`,
+  })
   ctx.font = `${10.5 * S}px "Space Grotesk", sans-serif`
   y += text(parties, M, y, `${10.5 * S}px "Space Grotesk", sans-serif`, SOFT, CW, 17 * S)
   y += 14 * S
@@ -91,9 +99,9 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
     if (draw) ctx.fillText(t.toUpperCase(), M, yy)
     return 16 * S
   }
-  y += sectionTitle('1 · Objeto del servicio', y)
+  y += sectionTitle(t('ac.s1'), y)
   if (d.items.length === 0) {
-    y += text('(Sin ítems definidos)', M, y, `italic ${10.5 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 17 * S)
+    y += text(t('doc.noItems'), M, y, `italic ${10.5 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 17 * S)
   } else {
     d.items.forEach((it, i) => {
       const num = `${String(i + 1).padStart(2, '0')}`
@@ -107,7 +115,7 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
   y += 12 * S
 
   // ——— 2 · esquema ———
-  y += sectionTitle('2 · Esquema de pago', y)
+  y += sectionTitle(t('ac.s2'), y)
   y += text(`${d.schemeLabel}.`, M, y + 11 * S, `${10.5 * S}px "Space Grotesk", sans-serif`, INK, CW, 16 * S) + 6 * S
   if (d.perPaymentLabel) {
     y += text(d.perPaymentLabel, M, y + 4 * S, `500 ${9 * S}px "IBM Plex Mono", monospace`, MUTED, CW, 14 * S) + 4 * S
@@ -125,7 +133,7 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
   y += 18 * S
   ctx.font = `600 ${8.5 * S}px "IBM Plex Mono", monospace`
   ctx.fillStyle = MUTED
-  if (draw) ctx.fillText('TOTAL ACORDADO', M, y)
+  if (draw) ctx.fillText(t('ac.agreedTotal').toUpperCase(), M, y)
   ctx.font = `700 ${16 * S}px "IBM Plex Mono", monospace`
   ctx.fillStyle = INK
   if (draw) {
@@ -135,15 +143,15 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
   y += 16 * S
 
   // ——— 3 · hitos ———
-  y += sectionTitle('3 · Hitos de pago', y)
+  y += sectionTitle(t('ac.s3'), y)
   if (d.milestones.length === 0) {
-    y += text('Pago único contra entrega del servicio.', M, y + 11 * S, `italic ${10.5 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 16 * S) + 6 * S
+    y += text(t('doc.single'), M, y + 11 * S, `italic ${10.5 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 16 * S) + 6 * S
   } else {
     d.milestones.forEach((m, i) => {
       y += 13 * S
       ctx.font = `600 ${10 * S}px "Space Grotesk", sans-serif`
       ctx.fillStyle = INK
-      const label = `${String(i + 1).padStart(2, '0')} · ${m.name || `Hito ${i + 1}`}`
+      const label = `${String(i + 1).padStart(2, '0')} · ${m.name || t('ac.milestoneN', { n: i + 1 })}`
       if (draw) ctx.fillText(label, M, y)
       ctx.font = `700 ${10 * S}px "IBM Plex Mono", monospace`
       const amt = `$ ${fmt(m.amount)}`
@@ -167,10 +175,7 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
   y += 10 * S
 
   // ——— nota legal ———
-  y += text(
-    'Ambas partes declaran estar de acuerdo con lo aquí descrito. Este documento resume los términos acordados y no sustituye asesoría legal profesional.',
-    M, y, `${9 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 14 * S
-  )
+  y += text(t('doc.legal'), M, y, `${9 * S}px "Space Grotesk", sans-serif`, MUTED, CW, 14 * S)
   y += 26 * S
 
   // ——— firmas ———
@@ -200,8 +205,8 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
       if (draw) ctx.fillText(idNum, x, y + 27 * S)
     }
   }
-  sig(M, 'EL CLIENTE', cName === 'el Contratante' ? '' : cName, d.clientId)
-  sig(M + colW + 40 * S, 'EL PRESTADOR', pName === 'el Prestador' ? '' : pName, d.providerId)
+  sig(M, t('ac.roleClient'), cName === theClient ? '' : cName, d.clientId)
+  sig(M + colW + 40 * S, t('ac.roleProvider'), pName === theProvider ? '' : pName, d.providerId)
   y += 36 * S
 
   return y + M * 0.6
@@ -210,6 +215,8 @@ function layout(ctx: Ctx, d: DocumentData, draw: boolean): number {
 export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [height, setHeight] = useState(0)
+  const t = useT()
+  const { lang } = useLang()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -221,7 +228,7 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
       mCanvas.width = W * S
       const mCtx = mCanvas.getContext('2d')!
       mCtx.scale(S, S)
-      const h = Math.ceil(layout(mCtx, data, false))
+      const h = Math.ceil(layout(mCtx, data, false, t))
       setHeight(h)
       // pase 2: dibujar
       canvas.width = W * S
@@ -230,7 +237,7 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
       ctx.scale(S, S)
       ctx.fillStyle = PAPER
       ctx.fillRect(0, 0, W, h)
-      layout(ctx, data, true)
+      layout(ctx, data, true, t)
     }
     if (document.fonts?.ready) {
       document.fonts.ready.then(render)
@@ -240,13 +247,14 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [data, onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, onClose, lang])
 
   const download = () => {
     const canvas = canvasRef.current
     if (!canvas) return
     const a = document.createElement('a')
-    a.download = `acuerdo-de-servicios${data.provider ? `-${data.provider.toLowerCase().replace(/\s+/g, '-')}` : ''}.png`
+    a.download = `${lang === 'es' ? 'acuerdo-de-servicios' : 'service-agreement'}${data.provider ? `-${data.provider.toLowerCase().replace(/\s+/g, '-')}` : ''}.png`
     a.href = canvas.toDataURL('image/png')
     a.click()
   }
@@ -262,13 +270,13 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
       >
         <div className="flex items-center justify-between border-b border-line px-6 py-4">
           <div>
-            <h3 className="font-grotesk text-lg font-bold">Tu acuerdo de servicios</h3>
-            <p className="text-xs text-inkmuted">Documento completo, listo para firmar o compartir</p>
+            <h3 className="font-grotesk text-lg font-bold">{t('doc.modalTitle')}</h3>
+            <p className="text-xs text-inkmuted">{t('doc.modalNote')}</p>
           </div>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label="Cerrar"
+            aria-label={t('ui.close')}
           >
             ✕
           </button>
@@ -288,7 +296,7 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
             className="flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
             style={{ backgroundColor: ACCENT }}
           >
-            Descargar como PNG
+            {t('doc.download')}
           </button>
         </div>
       </div>

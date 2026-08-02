@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
+import { dateLocale, useLang, useT } from '@/lib/i18n'
+
+type TFn = (k: string, v?: Record<string, string | number>) => string
 
 export type QuoteData = {
   service: string
@@ -17,7 +20,7 @@ const LINE = '#E7E5E0'
 const MUTED = '#78716C'
 const ACCENT = '#2F4BFF'
 
-const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
+const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) => {
   const W = 760
   const H = 820
   canvas.width = W * 2
@@ -39,11 +42,11 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   // header
   ctx.fillStyle = INK
   ctx.font = `700 34px ${sans}`
-  ctx.fillText('ORDEN DE SERVICIO', 48, 88)
+  ctx.fillText(t('quote.title'), 48, 88)
 
   ctx.font = `500 13px ${mono}`
   ctx.fillStyle = MUTED
-  const date = new Date().toLocaleDateString('es-VE', {
+  const date = new Date().toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -64,10 +67,10 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   // service
   ctx.font = `500 11px ${mono}`
   ctx.fillStyle = MUTED
-  ctx.fillText('SERVICIO', 48, 186)
+  ctx.fillText(t('quote.service'), 48, 186)
   ctx.font = `600 26px ${sans}`
   ctx.fillStyle = INK
-  const service = d.service.trim() || 'Servicio profesional'
+  const service = d.service.trim() || t('quote.defaultService')
   // simple word wrap
   const words = service.split(' ')
   let line = ''
@@ -92,7 +95,7 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
 
   ctx.font = `500 11px ${mono}`
   ctx.fillStyle = MUTED
-  ctx.fillText('MONTO ACORDADO', 48, serviceBottom + 36)
+  ctx.fillText(t('quote.amount'), 48, serviceBottom + 36)
   ctx.font = `600 40px ${mono}`
   ctx.fillStyle = INK
   ctx.fillText(`$ ${fmt(d.amountUSD)}`, 48, serviceBottom + 80)
@@ -103,7 +106,7 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   ctx.font = `500 13px ${mono}`
   ctx.fillStyle = MUTED
   ctx.fillText(
-    usd ? 'Montos expresados en dólares (USD)' : `Tasa de cambio: Bs. ${fmt(d.rateBs)} / USD`,
+    usd ? t('quote.usdNote') : t('quote.fxNote', { r: fmt(d.rateBs) }),
     48, serviceBottom + 112,
   )
 
@@ -117,7 +120,7 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   ctx.stroke()
 
   const rows: [string, string, string][] = [
-    ['Base imponible', `${cur} ${fmt(d.subtotalBs)}`, MUTED],
+    [t('quote.base'), `${cur} ${fmt(d.subtotalBs)}`, MUTED],
     [`${d.taxName} (${d.taxRate}%)`, `${cur} ${fmt(d.taxBs)}`, ACCENT],
   ]
   rows.forEach(([label, value, color], i) => {
@@ -140,7 +143,7 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   ctx.stroke()
   ctx.font = `700 13px ${sans}`
   ctx.fillStyle = INK
-  ctx.fillText('TOTAL A FACTURAR', 76, boxY + 192)
+  ctx.fillText(t('quote.total'), 76, boxY + 192)
   ctx.textAlign = 'right'
   ctx.font = `700 30px ${mono}`
   ctx.fillText(`${cur} ${fmt(d.totalBs)}`, W - 76, boxY + 192)
@@ -149,13 +152,8 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData) => {
   // footer
   ctx.font = `500 11px ${mono}`
   ctx.fillStyle = MUTED
-  ctx.fillText('Emitido con AD·Tools — Herramientas para emprendedores', 48, H - 88)
-  ctx.fillText(
-    usd
-      ? 'Para el equivalente en bolívares, aplica la tasa de cambio vigente al momento de facturar.'
-      : 'Los montos en bolívares se calculan según la tasa indicada al momento de emisión.',
-    48, H - 66,
-  )
+  ctx.fillText(t('quote.madeWith'), 48, H - 88)
+  ctx.fillText(usd ? t('quote.footerUsd') : t('quote.footerBs'), 48, H - 66)
 
   // dashed bottom
   ctx.strokeStyle = LINE
@@ -176,13 +174,16 @@ export default function QuoteModal({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [ready, setReady] = useState(false)
+  const t = useT()
+  const { lang } = useLang()
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    draw(canvas, data)
+    draw(canvas, data, t, dateLocale(lang))
     setReady(true)
-  }, [data])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, lang])
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -199,7 +200,7 @@ export default function QuoteModal({
     if (!canvas) return
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
-    a.download = `orden-de-servicio-${Date.now()}.png`
+    a.download = `${lang === 'es' ? 'orden-de-servicio' : 'service-order'}-${Date.now()}.png`
     a.click()
   }
 
@@ -213,11 +214,11 @@ export default function QuoteModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <p className="font-grotesk text-lg font-bold tracking-tight">Tu orden de servicio</p>
+          <p className="font-grotesk text-lg font-bold tracking-tight">{t('quote.modalTitle')}</p>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label="Cerrar"
+            aria-label={t('ui.close')}
           >
             ✕
           </button>
@@ -230,10 +231,10 @@ export default function QuoteModal({
             className="mt-5 w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
             style={{ backgroundColor: ACCENT }}
           >
-            Descargar como PNG
+            {t('quote.download')}
           </button>
           <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
-            Lista para enviar por WhatsApp o adjuntar al correo de tu cliente
+            {t('quote.modalNote')}
           </p>
         </div>
       </div>

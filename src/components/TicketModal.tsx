@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
+import { dateLocale, useLang, useT } from '@/lib/i18n'
+
+type TFn = (k: string, v?: Record<string, string | number>) => string
 
 export type TicketMilestone = { name: string; amount: number; when: string }
 
@@ -41,7 +44,7 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
 }
 
 /** Renders the ticket; when draw=false only measures and returns the final height. */
-function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): number {
+function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean, t: TFn, locale: string): number {
   let y = 0
 
   if (draw) {
@@ -79,18 +82,18 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
 
   // ——— header ———
   y = 88
-  text('TICKET DE SERVICIO', PAD, y, `700 32px ${SANS}`, INK)
+  text(t('ticket.title'), PAD, y, `700 32px ${SANS}`, INK)
   text('AD·TOOLS', W - PAD, y, `500 13px ${MONO}`, MUTED, 'right')
   y += 28
-  const date = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
+  const date = new Date().toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' })
   text(date.toUpperCase(), PAD, y, `500 13px ${MONO}`, MUTED)
   y += 28
   hline(y)
 
   // ——— partes ———
   y += 42
-  text('CONTRATANTE', PAD, y, `500 11px ${MONO}`, MUTED)
-  text('PRESTADOR', W / 2 + 16, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.client'), PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.provider'), W / 2 + 16, y, `500 11px ${MONO}`, MUTED)
   y += 28
   const clientLines = wrapLines(ctx, d.client || '—', W / 2 - PAD - 16)
   const providerLines = wrapLines(ctx, d.provider || '—', W / 2 - PAD - 16)
@@ -103,12 +106,12 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
 
   // ——— ítems ———
   y += 42
-  text('ÍTEMS DEL SERVICIO', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.items'), PAD, y, `500 11px ${MONO}`, MUTED)
   y += 30
   const itemFont = `500 15px ${SANS}`
   if (draw) ctx.font = itemFont
   if (d.items.length === 0) {
-    text('Sin ítems definidos', PAD, y, itemFont, MUTED)
+    text(t('ticket.noItems'), PAD, y, itemFont, MUTED)
     y += 30
   } else {
     d.items.forEach((item, i) => {
@@ -126,7 +129,7 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
 
   // ——— esquema de pago ———
   y += 42
-  text('ESQUEMA DE PAGO', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.scheme'), PAD, y, `500 11px ${MONO}`, MUTED)
   y += 30
   const schemeLines = wrapLines(ctx, d.schemeLabel, W - PAD * 2)
   if (draw) ctx.font = `600 18px ${SANS}`
@@ -140,23 +143,23 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
     y += 26
   }
   y += 8
-  text('TOTAL ACORDADO', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.total'), PAD, y, `500 11px ${MONO}`, MUTED)
   text(`$ ${fmt(d.total)}`, W - PAD, y + 8, `700 26px ${MONO}`, INK, 'right')
   y += 44
   hline(y)
 
   // ——— hitos ———
   y += 42
-  text('HITOS DE PAGO', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.milestones'), PAD, y, `500 11px ${MONO}`, MUTED)
   y += 26
   if (d.milestones.length === 0) {
-    text('Pago único contra entrega', PAD, y, `500 15px ${SANS}`, MUTED)
+    text(t('ticket.single'), PAD, y, `500 15px ${SANS}`, MUTED)
     y += 34
   } else {
     d.milestones.forEach((m, i) => {
       y += 22
       text(`${String(i + 1).padStart(2, '0')}`, PAD, y, `500 13px ${MONO}`, ACCENT)
-      const nameLines = wrapLines(ctx, m.name || `Hito ${i + 1}`, W - PAD * 2 - 200)
+      const nameLines = wrapLines(ctx, m.name || t('ticket.milestoneN', { n: i + 1 }), W - PAD * 2 - 200)
       if (draw) ctx.font = `600 15px ${SANS}`
       nameLines.forEach((l, li) => text(l, PAD + 40, y + li * 22, `600 15px ${SANS}`, INK))
       text(`$ ${fmt(m.amount)}`, W - PAD, y, `600 16px ${MONO}`, INK, 'right')
@@ -173,9 +176,9 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
 
   // ——— footer ———
   y += 30
-  text('Emitido con AD·Tools — Herramientas para emprendedores', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.madeWith'), PAD, y, `500 11px ${MONO}`, MUTED)
   y += 22
-  text('Este ticket resume el acuerdo entre las partes; no sustituye un contrato legal.', PAD, y, `500 11px ${MONO}`, MUTED)
+  text(t('ticket.disclaimer'), PAD, y, `500 11px ${MONO}`, MUTED)
   y += 36
 
   // dashed bottom edge
@@ -192,32 +195,35 @@ function layout(ctx: CanvasRenderingContext2D, d: TicketData, draw: boolean): nu
   return y + 10
 }
 
-const drawTicket = (canvas: HTMLCanvasElement, d: TicketData) => {
+const drawTicket = (canvas: HTMLCanvasElement, d: TicketData, t: TFn, locale: string) => {
   // pass 1: measure
   const measure = document.createElement('canvas')
   measure.width = W
   measure.height = 100
   const mctx = measure.getContext('2d')!
-  const h = layout(mctx, d, false)
+  const h = layout(mctx, d, false, t, locale)
 
   // pass 2: draw
   canvas.width = W * 2
   canvas.height = h * 2
   const ctx = canvas.getContext('2d')!
   ctx.scale(2, 2)
-  layout(ctx, d, true)
+  layout(ctx, d, true, t, locale)
 }
 
 export function TicketModal({ data, onClose }: { data: TicketData; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [url, setUrl] = useState('')
+  const t = useT()
+  const { lang } = useLang()
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    drawTicket(canvas, data)
+    drawTicket(canvas, data, t, dateLocale(lang))
     setUrl(canvas.toDataURL('image/png'))
-  }, [data])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, lang])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -228,7 +234,7 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
   const download = () => {
     const a = document.createElement('a')
     a.href = url
-    a.download = `ticket-de-servicio-${Date.now()}.png`
+    a.download = `${lang === 'es' ? 'ticket-de-servicio' : 'service-ticket'}-${Date.now()}.png`
     a.click()
   }
 
@@ -243,13 +249,13 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
       >
         <div className="flex items-center justify-between border-b border-line px-6 py-4">
           <div>
-            <h3 className="font-grotesk text-lg font-bold">Tu ticket de servicio</h3>
-            <p className="text-xs text-inkmuted">Listo para enviar por WhatsApp o adjuntar al correo del prestador</p>
+            <h3 className="font-grotesk text-lg font-bold">{t('ticket.modalTitle')}</h3>
+            <p className="text-xs text-inkmuted">{t('ticket.modalNote')}</p>
           </div>
           <button
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-paper hover:text-ink"
-            aria-label="Cerrar"
+            aria-label={t('ui.close')}
           >
             ✕
           </button>
@@ -265,7 +271,7 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
             className="w-full rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
             style={{ backgroundColor: ACCENT }}
           >
-            Descargar como PNG
+            {t('ticket.download')}
           </button>
         </div>
       </div>
