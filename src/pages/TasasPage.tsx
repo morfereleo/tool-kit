@@ -4,6 +4,7 @@ import { TOOLS } from '@/lib/tools'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
 import { useVeRates, type RateKey } from '@/hooks/useVeRates'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[1]
 const ACCENT = tool.accent
@@ -78,7 +79,10 @@ export default function TasasPage() {
             {status === 'error' && t('tasas.offline')}
           </span>
           <button
-            onClick={reload}
+            onClick={() => {
+              posthog.capture('rate_data_refreshed')
+              reload()
+            }}
             className="rounded-full border border-line px-3 py-1.5 font-mono text-xs text-inksoft transition-colors hover:border-ink hover:text-ink"
           >
             {t('tasas.reload')}

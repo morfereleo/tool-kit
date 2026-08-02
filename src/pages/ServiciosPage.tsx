@@ -12,6 +12,7 @@ import { TOOLS } from '@/lib/tools'
 import { VAT_COUNTRIES } from '@/lib/vat'
 import { fmt } from '@/lib/format'
 import { useBaseRate } from '@/hooks/useBaseRate'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[4]
 const ACCENT = tool.accent
@@ -209,6 +210,7 @@ export default function ServiciosPage() {
 
   /* ——— quote generation ——— */
   const openQuote = (data: QuoteData) => {
+    posthog.capture('service_order_generated', { source: 'pricing_tool', pricing_model: model })
     setQuoteData(data)
     setShowQuote(true)
   }
@@ -268,6 +270,7 @@ export default function ServiciosPage() {
 
   const handleSave = (name: string) => {
     const id = save(openDocId ? docName || name : name, buildPayload(), openDocId ?? undefined)
+    posthog.capture('quote_saved', { pricing_model: model, is_existing_quote: Boolean(openDocId) })
     setOpenDocId(id)
     setDocName(openDocId ? docName || name : name)
   }

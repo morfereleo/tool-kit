@@ -8,6 +8,7 @@ import { Step, NumInput, HealthPill } from '@/components/QuoteUI'
 import { IconUsers, IconList, IconWallet, IconFlag, IconDoc } from '@/components/icons'
 import { TicketModal, type TicketData } from '@/components/TicketModal'
 import { DocumentModal, type DocumentData } from '@/components/DocumentModal'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[5]
 const ACCENT = tool.accent
@@ -116,6 +117,7 @@ export default function AcuerdoPage() {
   const handleSave = (name: string) => {
     const finalName = openDocId ? docName || name : name
     const id = save(finalName, buildPayload(), openDocId ?? undefined)
+    posthog.capture('agreement_saved', { is_existing_agreement: Boolean(openDocId), item_count: filledItems.length })
     setOpenDocId(id)
     setDocName(finalName)
   }
@@ -173,7 +175,8 @@ export default function AcuerdoPage() {
   const filledItems = items.map((i) => i.text.trim()).filter(Boolean)
   const today = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
 
-  const openTicket = () =>
+  const openTicket = () => {
+    posthog.capture('service_ticket_generated', { item_count: filledItems.length, milestone_count: calc.filledMilestones.length })
     setTicket({
       client: client.trim(),
       provider: provider.trim(),
@@ -183,8 +186,10 @@ export default function AcuerdoPage() {
       total: calc.total,
       milestones: calc.filledMilestones,
     })
+  }
 
-  const openDocument = () =>
+  const openDocument = () => {
+    posthog.capture('service_agreement_generated', { item_count: filledItems.length, milestone_count: calc.filledMilestones.length })
     setDocument({
       client: client.trim(),
       clientId: clientId.trim(),
@@ -197,6 +202,7 @@ export default function AcuerdoPage() {
       total: calc.total,
       milestones: calc.filledMilestones,
     })
+  }
 
   const setItem = (id: number, text: string) =>
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, text } : i)))

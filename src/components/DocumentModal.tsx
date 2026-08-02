@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
 import { useLang, useT } from '@/lib/i18n'
+import posthog from '@/lib/posthog'
 
 type TFn = (k: string, v?: Record<string, string | number>) => string
 
@@ -257,6 +258,7 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
     a.download = `${lang === 'es' ? 'acuerdo-de-servicios' : 'service-agreement'}${data.provider ? `-${data.provider.toLowerCase().replace(/\s+/g, '-')}` : ''}.png`
     a.href = canvas.toDataURL('image/png')
     a.click()
+    posthog.capture('service_agreement_downloaded', { item_count: data.items.length, milestone_count: data.milestones.length })
   }
 
   return (

@@ -4,6 +4,7 @@ import { TOOLS } from '@/lib/tools'
 import { useLang, useT } from '@/lib/i18n'
 import { EMOJI_GROUPS, TEXT_STYLES, charCount, unstyle, type TextStyle } from '@/lib/textStyles'
 import { IconCheck, IconSpark } from '@/components/icons'
+import posthog from '@/lib/posthog'
 
 const LIMITS = [
   { id: 'x', label: 'X / Twitter', max: 280 },
@@ -121,6 +122,7 @@ export default function TextoPage() {
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
+    posthog.capture('text_copied', { character_count: len })
     if (copyTimer.current) clearTimeout(copyTimer.current)
     setCopied(true)
     copyTimer.current = setTimeout(() => setCopied(false), 1600)

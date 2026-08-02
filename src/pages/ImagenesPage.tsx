@@ -5,6 +5,7 @@ import BeforeAfterModal from '@/components/BeforeAfterModal'
 import { TOOLS } from '@/lib/tools'
 import { fmtBytes } from '@/lib/format'
 import { useLang, useT } from '@/lib/i18n'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[2]
 const ACCENT = tool.accent
@@ -81,9 +82,12 @@ export default function ImagenesPage() {
   const processAll = useCallback(async () => {
     const mw = parseInt(maxWidth) || 0
     setJobs((prev) => prev.map((j) => (j.status === 'pending' ? j : j)))
-    for (const job of jobs.filter((j) => j.status === 'pending')) {
+    const pendingJobs = jobs.filter((j) => j.status === 'pending')
+    let optimizedCount = 0
+    for (const job of pendingJobs) {
       try {
         const { blob, width, height } = await convertToWebP(job.file, quality, mw)
+        optimizedCount += 1
         setJobs((prev) =>
           prev.map((j) =>
             j.id === job.id ? { ...j, status: 'done', webpBlob: blob, webpSize: blob.size, width, height } : j,
@@ -92,6 +96,9 @@ export default function ImagenesPage() {
       } catch {
         setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: 'error' } : j)))
       }
+    }
+    if (optimizedCount > 0) {
+      posthog.capture('images_optimized', { image_count: optimizedCount, quality, has_max_width: mw > 0 })
     }
   }, [jobs, quality, maxWidth])
 
@@ -102,6 +109,7 @@ export default function ImagenesPage() {
     a.href = url
     a.download = `${job.name}.webp`
     a.click()
+    posthog.capture('optimized_images_downloaded', { download_format: 'webp', image_count: 1 })
     URL.revokeObjectURL(url)
   }
 
@@ -117,6 +125,7 @@ export default function ImagenesPage() {
     a.href = url
     a.download = lang === 'es' ? 'imagenes-webp.zip' : 'images-webp.zip'
     a.click()
+    posthog.capture('optimized_images_downloaded', { download_format: 'zip', image_count: done.length })
     URL.revokeObjectURL(url)
   }
 
