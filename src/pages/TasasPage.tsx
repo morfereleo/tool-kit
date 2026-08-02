@@ -2,16 +2,17 @@ import { useMemo, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import { TOOLS } from '@/lib/tools'
 import { fmt } from '@/lib/format'
+import { dateLocale, useLang, useT } from '@/lib/i18n'
 import { useVeRates, type RateKey } from '@/hooks/useVeRates'
 
 const tool = TOOLS[1]
 const ACCENT = tool.accent
 
-const RATE_META: { key: RateKey; label: string; symbol: string; source: string }[] = [
-  { key: 'USD_BCV', label: 'Dólar BCV', symbol: '$', source: 'Banco Central de Venezuela' },
-  { key: 'EUR_BCV', label: 'Euro BCV', symbol: '€', source: 'Banco Central de Venezuela' },
-  { key: 'USD_PARALELO', label: 'Dólar paralelo', symbol: '$p', source: 'Mercado paralelo' },
-  { key: 'USDT', label: 'USDT (Tether)', symbol: '₮', source: 'P2P / estimado' },
+const RATE_META: { key: RateKey; labelKey: string; symbol: string; sourceKey: string }[] = [
+  { key: 'USD_BCV', labelKey: 'tasas.usdBcv', symbol: '$', sourceKey: 'tasas.srcBcv' },
+  { key: 'EUR_BCV', labelKey: 'tasas.eurBcv', symbol: '€', sourceKey: 'tasas.srcBcv' },
+  { key: 'USD_PARALELO', labelKey: 'tasas.usdPar', symbol: '$p', sourceKey: 'tasas.srcPar' },
+  { key: 'USDT', labelKey: 'tasas.usdt', symbol: '₮', sourceKey: 'tasas.srcUsdt' },
 ]
 
 export default function TasasPage() {
@@ -19,9 +20,12 @@ export default function TasasPage() {
   const [edited, setEdited] = useState<Partial<Record<RateKey, string>>>({})
   const [amount, setAmount] = useState('100')
   const [from, setFrom] = useState<RateKey | 'VES'>('USD_BCV')
+  const { lang } = useLang()
+  const t = useT()
+  const dl = dateLocale(lang)
 
   const prevLabel = prevAt
-    ? new Date(prevAt).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })
+    ? new Date(prevAt).toLocaleDateString(dl, { day: '2-digit', month: 'short' })
     : ''
 
   const getRate = (key: RateKey): number | null => {
@@ -38,12 +42,15 @@ export default function TasasPage() {
     const vesValue = from === 'VES' ? amt : amt * (getRate(from as RateKey) ?? 0)
     return RATE_META.map((m) => {
       const r = getRate(m.key)
-      return { ...m, value: r && r > 0 ? vesValue / r : null }
+      return { ...m, label: t(m.labelKey), value: r && r > 0 ? vesValue / r : null }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, from, rates, edited])
+  }, [amount, from, rates, edited, lang])
 
-  const fromMeta = from === 'VES' ? { label: 'Bolívares', symbol: 'Bs.' } : RATE_META.find((m) => m.key === from)!
+  const fromMeta =
+    from === 'VES'
+      ? { label: t('tasas.bolivares'), symbol: 'Bs.' }
+      : { ...RATE_META.find((m) => m.key === from)!, label: t(RATE_META.find((m) => m.key === from)!.labelKey) }
 
   return (
     <BrandShell tool={tool}>
@@ -63,16 +70,18 @@ export default function TasasPage() {
               className={`h-1.5 w-1.5 rounded-full ${status === 'ok' ? 'animate-pulse' : ''}`}
               style={{ backgroundColor: status === 'error' ? '#DC2626' : ACCENT }}
             />
-            {status === 'loading' && 'Consultando tasas…'}
+            {status === 'loading' && t('tasas.loading')}
             {status === 'ok' &&
-              `Actualizado: ${new Date(updatedAt).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}`}
-            {status === 'error' && 'Sin conexión — ingresa las tasas manualmente'}
+              t('tasas.updated', {
+                date: new Date(updatedAt).toLocaleDateString(dl, { day: '2-digit', month: 'short', year: 'numeric' }),
+              })}
+            {status === 'error' && t('tasas.offline')}
           </span>
           <button
             onClick={reload}
             className="rounded-full border border-line px-3 py-1.5 font-mono text-xs text-inksoft transition-colors hover:border-ink hover:text-ink"
           >
-            ↻ Actualizar
+            {t('tasas.reload')}
           </button>
           </div>
         </div>
@@ -81,14 +90,14 @@ export default function TasasPage() {
       {/* RATE BOARD */}
       <section className="border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
-          <p className="field-label">Pizarra de tasas · Bs. por unidad (tocables para editar)</p>
+          <p className="field-label">{t('tasas.board')}</p>
           <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {RATE_META.map((m) => {
               const r = getRate(m.key)
               return (
                 <div key={m.key} className="bg-paper p-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{m.label}</span>
+                    <span className="text-sm font-semibold">{t(m.labelKey)}</span>
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ACCENT }} />
                   </div>
                   <div className="relative mt-3">
@@ -105,7 +114,7 @@ export default function TasasPage() {
                     />
                   </div>
                   <p className="mt-2 flex items-center justify-between">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-inkmuted">{m.source}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-inkmuted">{t(m.sourceKey)}</span>
                     {(() => {
                       const d = deltas[m.key]
                       if (d == null) return null
@@ -113,7 +122,7 @@ export default function TasasPage() {
                       const down = d < -0.005
                       return (
                         <span
-                          title={`Variación vs. consulta anterior${prevLabel ? ` (${prevLabel})` : ''}`}
+                          title={`${t('tasas.deltaTitle')}${prevLabel ? ` (${prevLabel})` : ''}`}
                           className="rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
                           style={{
                             backgroundColor: up ? '#00965E1A' : down ? '#DC26261A' : 'rgb(var(--line) / 0.5)',
@@ -134,7 +143,7 @@ export default function TasasPage() {
               onClick={() => setEdited({})}
               className="mt-4 font-mono text-xs text-inkmuted underline underline-offset-4 hover:text-ink"
             >
-              Restablecer tasas originales
+              {t('tasas.reset')}
             </button>
           )}
         </div>
@@ -144,7 +153,7 @@ export default function TasasPage() {
       <section>
         <div className="mx-auto grid max-w-6xl md:grid-cols-2">
           <div className="border-b border-line px-5 py-10 md:border-b-0 md:border-r md:px-8 md:py-14">
-            <label className="field-label">Monto a convertir</label>
+            <label className="field-label">{t('tasas.amount')}</label>
             <div className="relative">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-lg text-inkmuted">
                 {fromMeta.symbol}
@@ -159,9 +168,9 @@ export default function TasasPage() {
               />
             </div>
 
-            <label className="field-label mt-10 block">Moneda de origen</label>
+            <label className="field-label mt-10 block">{t('tasas.from')}</label>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {[{ key: 'VES' as const, label: 'Bolívares', symbol: 'Bs.' }, ...RATE_META].map((m) => (
+              {[{ key: 'VES' as const, label: t('tasas.bolivares'), symbol: 'Bs.' }, ...RATE_META.map((m) => ({ key: m.key, label: t(m.labelKey), symbol: m.symbol }))].map((m) => (
                 <button
                   key={m.key}
                   onClick={() => setFrom(m.key as RateKey | 'VES')}
@@ -182,7 +191,7 @@ export default function TasasPage() {
           </div>
 
           <div className="px-5 py-10 md:px-8 md:py-14">
-            <p className="field-label">Equivale a</p>
+            <p className="field-label">{t('tasas.to')}</p>
             <div className="mt-4 border-y border-line">
               {conversions
                 .filter((c) => c.key !== from)
@@ -199,7 +208,7 @@ export default function TasasPage() {
                   </div>
                 ))}
               <div className="flex items-baseline justify-between py-5">
-                <span className="text-sm font-semibold uppercase tracking-[0.15em]">Bolívares</span>
+                <span className="text-sm font-semibold uppercase tracking-[0.15em]">{t('tasas.bolivares')}</span>
                 <span className="tool-num text-3xl font-semibold md:text-4xl" style={{ color: ACCENT }}>
                   {(() => {
                     const amt = parseFloat(amount.replace(',', '.')) || 0
@@ -211,10 +220,7 @@ export default function TasasPage() {
               </div>
             </div>
             <p className="mt-6 font-mono text-xs leading-relaxed text-inkmuted">
-              * Tasas oficiales del BCV vía API pública (dolarapi.com). La tasa USDT es
-              una estimación basada en el mercado — verifica el precio real en tu
-              exchange P2P antes de cerrar una operación. Las flechas ▲▼ comparan
-              contra tu consulta anterior guardada en este navegador.
+              {t('tasas.disclaimer')}
             </p>
           </div>
         </div>

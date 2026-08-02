@@ -1,7 +1,11 @@
 import { ArrowUpRight } from '@/components/Layout'
-import { TOOLS } from '@/lib/tools'
+import { TOOLS, toolText } from '@/lib/tools'
+import { useLang, useT } from '@/lib/i18n'
 
 export default function Home() {
+  const { lang } = useLang()
+  const t = useT()
+  const chips = [t('home.chip1'), t('home.chip2'), t('home.chip3')]
   return (
     <main className="pt-14">
       {/* HERO */}
@@ -9,15 +13,15 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-5 pb-14 pt-16 md:px-8 md:pb-20 md:pt-24">
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-inkmuted">
-              Herramientas Freelance
+              {t('home.kicker')}
             </span>
           </div>
 
           <h1 className="mt-6 font-grotesk text-[13vw] font-bold leading-[0.85] tracking-tighter md:text-[8.5rem]">
-            Caja de
+            {t('home.title1')}
             <br />
             <span className="relative inline-block">
-              herramientas
+              {t('home.title2')}
               <span className="absolute -right-6 top-2 hidden rotate-12 rounded-full border-2 border-ink px-3 py-1 font-mono text-xs font-medium uppercase tracking-widest md:inline-block">
                 Beta
               </span>
@@ -25,13 +29,11 @@ export default function Home() {
           </h1>
 
           <p className="mt-8 max-w-xl text-balance text-lg leading-relaxed text-inksoft md:text-xl">
-            Utilidades rápidas y sin fricción para emprendedores y freelancers:
-            calcula impuestos, convierte divisas, optimiza imágenes, genera QR y
-            cotiza proyectos como un profesional.
+            {t('home.sub')}
           </p>
 
           <div className="mt-10 flex flex-wrap gap-2">
-            {['Sin registro', 'Sin instalación', 'Tus datos no salen del navegador'].map((chip) => (
+            {chips.map((chip) => (
               <span
                 key={chip}
                 className="rounded-full border border-line px-4 py-1.5 text-[13px] font-medium text-inksoft"
@@ -47,7 +49,7 @@ export default function Home() {
       <section>
         <div className="mx-auto max-w-6xl px-5 md:px-8">
           <p className="border-b border-line py-5 font-mono text-xs uppercase tracking-[0.25em] text-inkmuted">
-            Selecciona una herramienta ↓
+            {t('home.indexCta')}
           </p>
 
           <ul>
@@ -73,12 +75,12 @@ export default function Home() {
                     </span>
                     <span className="flex-1">
                       <span className="block font-grotesk text-2xl font-bold tracking-tight md:text-4xl">
-                        {tool.name}
+                        {toolText(tool, lang).name}
                       </span>
                       <span
                         className="mt-1 block text-sm text-inksoft transition-colors duration-200 group-hover:text-white/80 md:text-base"
                       >
-                        {tool.tagline}
+                        {toolText(tool, lang).tagline}
                       </span>
                     </span>
                     <span className="hidden transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 md:block">
@@ -98,14 +100,12 @@ export default function Home() {
           <div className="grid gap-10 md:grid-cols-12">
             <div className="md:col-span-4">
               <p className="font-mono text-xs uppercase tracking-[0.25em] text-inkmuted">
-                [ Nota ]
+                {t('home.note')}
               </p>
             </div>
             <div className="md:col-span-8">
               <p className="font-grotesk text-2xl font-medium leading-snug tracking-tight md:text-3xl">
-                Todo corre en tu navegador. Las tasas de cambio se consultan en
-                vivo desde fuentes públicas; el resto de herramientas procesan
-                tus datos localmente — nada se sube a ningún servidor.
+                {t('home.noteText')}
               </p>
             </div>
           </div>

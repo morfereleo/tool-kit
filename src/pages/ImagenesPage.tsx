@@ -4,6 +4,7 @@ import BrandShell from '@/components/BrandShell'
 import BeforeAfterModal from '@/components/BeforeAfterModal'
 import { TOOLS } from '@/lib/tools'
 import { fmtBytes } from '@/lib/format'
+import { useLang, useT } from '@/lib/i18n'
 
 const tool = TOOLS[2]
 const ACCENT = tool.accent
@@ -48,6 +49,8 @@ export default function ImagenesPage() {
   const [dragging, setDragging] = useState(false)
   const [compare, setCompare] = useState<{ job: Job; webpUrl: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const t = useT()
+  const { lang } = useLang()
 
   const openCompare = (job: Job) => {
     if (!job.webpBlob || !job.preview) return
@@ -112,7 +115,7 @@ export default function ImagenesPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'imagenes-webp.zip'
+    a.download = lang === 'es' ? 'imagenes-webp.zip' : 'images-webp.zip'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -163,10 +166,10 @@ export default function ImagenesPage() {
             </svg>
           </div>
           <p className="mt-5 font-grotesk text-2xl font-bold tracking-tight">
-            {dragging ? 'Suéltalas aquí' : 'Arrastra tus imágenes'}
+            {dragging ? t('img.dropping') : t('img.drop')}
           </p>
           <p className="mt-2 text-sm text-inksoft">
-            o haz clic para seleccionar · JPG y PNG · todo se procesa en tu navegador
+            {t('img.dropHint')}
           </p>
         </div>
 
@@ -174,7 +177,7 @@ export default function ImagenesPage() {
         {jobs.length > 0 && (
           <div className="mt-10 grid gap-8 md:grid-cols-3">
             <div>
-              <label className="field-label">Calidad WebP — {quality}%</label>
+              <label className="field-label">{t('img.quality', { q: quality })}</label>
               <input
                 type="range"
                 min="30"
@@ -184,10 +187,10 @@ export default function ImagenesPage() {
                 className="mt-3 w-full"
                 style={{ accentColor: ACCENT }}
               />
-              <p className="mt-1 font-mono text-[11px] text-inkmuted">80–85 es el punto dulce habitual</p>
+              <p className="mt-1 font-mono text-[11px] text-inkmuted">{t('img.qualityHint')}</p>
             </div>
             <div>
-              <label className="field-label">Ancho máximo (px, 0 = original)</label>
+              <label className="field-label">{t('img.maxWidth')}</label>
               <input
                 type="number"
                 min="0"
@@ -204,14 +207,18 @@ export default function ImagenesPage() {
                 className="w-full rounded-full py-3.5 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
                 style={{ backgroundColor: ACCENT }}
               >
-                Optimizar {pendingCount > 0 ? `${pendingCount} imagen${pendingCount > 1 ? 'es' : ''}` : 'todo listo'}
+                {pendingCount > 0
+                  ? pendingCount > 1
+                    ? t('img.optimizeMany', { n: pendingCount })
+                    : t('img.optimizeOne', { n: pendingCount })
+                  : t('img.allDone')}
               </button>
               {doneCount > 0 && (
                 <button
                   onClick={downloadAll}
                   className="w-full rounded-full border border-ink py-3 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper"
                 >
-                  Descargar {doneCount > 1 ? `todas (.zip)` : 'WebP'}
+                  {doneCount > 1 ? t('img.downloadZip') : t('img.downloadOne')}
                 </button>
               )}
             </div>
@@ -225,10 +232,10 @@ export default function ImagenesPage() {
             style={{ backgroundColor: ACCENT }}
           >
             <p className="font-grotesk text-xl font-bold tracking-tight">
-              {fmtBytes(totalSaved)} ahorrados
+              {fmtBytes(totalSaved)} {t('img.saved')}
             </p>
             <p className="font-mono text-sm text-white/80">
-              {doneCount} imagen{doneCount > 1 ? 'es' : ''} optimizada{doneCount > 1 ? 's' : ''}
+              {doneCount} {doneCount > 1 ? t('img.imagesDone') : t('img.imageDone')}
             </p>
           </div>
         )}
@@ -247,7 +254,7 @@ export default function ImagenesPage() {
                     <button
                       onClick={() => openCompare(job)}
                       className="group relative shrink-0"
-                      title="Comparar antes / después"
+                      title={t('img.compare')}
                     >
                       <img
                         src={job.preview}
@@ -280,8 +287,8 @@ export default function ImagenesPage() {
                           {job.width && job.height && ` · ${job.width}×${job.height}`}
                         </>
                       )}
-                      {job.status === 'pending' && ' · en espera'}
-                      {job.status === 'error' && ' · error al convertir'}
+                      {job.status === 'pending' && t('img.pending')}
+                      {job.status === 'error' && t('img.failed')}
                     </p>
                   </div>
                   {saving != null && (
@@ -297,13 +304,13 @@ export default function ImagenesPage() {
                       onClick={() => downloadOne(job)}
                       className="shrink-0 rounded-full border border-line px-3 py-2 text-xs font-semibold transition-colors hover:border-ink hover:bg-ink hover:text-paper sm:px-4"
                     >
-                      Descargar
+                      {t('img.download')}
                     </button>
                   )}
                   <button
                     onClick={() => setJobs((prev) => prev.filter((j) => j.id !== job.id))}
                     className="text-inkmuted transition-colors hover:text-ink"
-                    aria-label="Quitar"
+                    aria-label={t('qr.remove')}
                   >
                     ✕
                   </button>
@@ -316,9 +323,9 @@ export default function ImagenesPage() {
         {jobs.length === 0 && (
           <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3">
             {[
-              { n: '1', t: 'Sube', d: 'Arrastra JPG o PNG, una o varias a la vez.' },
-              { n: '2', t: 'Ajusta', d: 'Elige calidad y tamaño máximo según tu caso.' },
-              { n: '3', t: 'Descarga', d: 'WebP ligero, listo para web, tienda o portafolio.' },
+              { n: '1', t: t('img.step1t'), d: t('img.step1d') },
+              { n: '2', t: t('img.step2t'), d: t('img.step2d') },
+              { n: '3', t: t('img.step3t'), d: t('img.step3d') },
             ].map((s) => (
               <div key={s.n} className="bg-paper p-6">
                 <span className="font-mono text-sm" style={{ color: ACCENT }}>
