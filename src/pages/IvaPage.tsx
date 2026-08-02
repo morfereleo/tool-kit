@@ -7,6 +7,8 @@ import { VAT_COUNTRIES } from '@/lib/vat'
 import { getTaxNote } from '@/lib/taxNotes'
 import { fmt } from '@/lib/format'
 import { useVeRates } from '@/hooks/useVeRates'
+import { useLang } from '@/lib/i18n'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[0]
 const ACCENT = tool.accent
@@ -172,6 +174,7 @@ function KeypadToggle({
 }
 
 export default function IvaPage() {
+  const { lang } = useLang()
   const [countryCode, setCountryCode] = useState('VE')
   const [customRate, setCustomRate] = useState('')
   const [raw, setRaw] = useState('')
@@ -277,6 +280,7 @@ export default function IvaPage() {
       lines.push(`Total a pagar: ${currency} ${fmt(grandTotal)}`)
     }
     await navigator.clipboard.writeText(lines.join('\n'))
+    posthog.capture('tax_summary_copied', { calculator_mode: 'simple', tax_mode: mode, includes_igtf: showIgtf })
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
   }
@@ -294,6 +298,7 @@ export default function IvaPage() {
 
   const generateQuote = () => {
     if (!advValid) return
+    posthog.capture('service_order_generated', { source: 'tax_calculator', tax_rate: rate })
     setQuoteData({
       service: serviceName,
       amountUSD: advUsd,
@@ -517,7 +522,7 @@ export default function IvaPage() {
             {/* right: note + disclaimer */}
             <div className="flex flex-col justify-center gap-8">
               <InfoNote
-                note={getTaxNote(countryCode, country?.name ?? 'tu país', taxName, rate)}
+                note={getTaxNote(countryCode, country?.name ?? 'tu país', taxName, rate, lang)}
                 mode={mode}
                 highlight={noteHighlight}
                 onDismiss={dismissNote}
@@ -724,7 +729,7 @@ export default function IvaPage() {
             {/* right: info */}
             <div className="flex flex-col justify-center gap-8">
               <InfoNote
-                note={getTaxNote(countryCode, country?.name ?? 'tu país', taxName, rate)}
+                note={getTaxNote(countryCode, country?.name ?? 'tu país', taxName, rate, lang)}
                 mode="add"
                 highlight={noteHighlight}
                 onDismiss={dismissNote}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
+import posthog from '@/lib/posthog'
 
 type TFn = (k: string, v?: Record<string, string | number>) => string
 
@@ -236,6 +237,7 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
     a.href = url
     a.download = `${lang === 'es' ? 'ticket-de-servicio' : 'service-ticket'}-${Date.now()}.png`
     a.click()
+    posthog.capture('service_ticket_downloaded', { item_count: data.items.length, milestone_count: data.milestones.length })
   }
 
   return (

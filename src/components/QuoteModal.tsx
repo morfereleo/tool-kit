@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
+import posthog from '@/lib/posthog'
 
 type TFn = (k: string, v?: Record<string, string | number>) => string
 
@@ -202,6 +203,7 @@ export default function QuoteModal({
     a.href = canvas.toDataURL('image/png')
     a.download = `${lang === 'es' ? 'orden-de-servicio' : 'service-order'}-${Date.now()}.png`
     a.click()
+    posthog.capture('service_order_downloaded', { currency: data.rateBs <= 1 ? 'usd' : 'ves' })
   }
 
   return (

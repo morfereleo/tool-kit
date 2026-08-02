@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import BrandShell from '@/components/BrandShell'
 import { TOOLS } from '@/lib/tools'
+import posthog from '@/lib/posthog'
 
 const tool = TOOLS[3]
 const ACCENT = tool.accent
@@ -120,6 +121,7 @@ export default function QrPage() {
     a.href = canvas.toDataURL('image/png')
     a.download = 'qr.png'
     a.click()
+    posthog.capture('qr_code_downloaded', { format: 'png', size, has_logo: Boolean(logo) })
   }
 
   /* Logo como PNG embebido para el SVG */
@@ -162,6 +164,7 @@ export default function QrPage() {
     a.href = url
     a.download = 'qr.svg'
     a.click()
+    posthog.capture('qr_code_downloaded', { format: 'svg', size, has_logo: Boolean(logo) })
     URL.revokeObjectURL(url)
   }
 
