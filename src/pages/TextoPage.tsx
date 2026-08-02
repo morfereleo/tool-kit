@@ -56,8 +56,11 @@ function LimitChip({ label, max, len }: { label: string; max: number; len: numbe
   )
 }
 
-/** Evita que el botón robe el foco del textarea (así se conserva la selección) */
-const keepFocus = (e: React.PointerEvent) => e.preventDefault()
+/**
+ * Evita que el botón robe el foco del textarea (así se conserva la selección).
+ * Solo se aplica al ratón: en táctil no se previene para no bloquear el scroll.
+ */
+const keepFocus = (e: React.MouseEvent) => e.preventDefault()
 
 export default function TextoPage() {
   const tool = TOOLS.find((t) => t.id === 'texto')!
@@ -152,21 +155,21 @@ export default function TextoPage() {
     <BrandShell tool={tool}>
       <section>
         <div className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
-          <div className="grid gap-8 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             {/* Editor */}
-            <div className="lg:col-span-7">
+            <div className="min-w-0 lg:col-span-7">
               <label htmlFor="copy-input" className="field-label">
                 Tu copy
               </label>
 
               {/* Barra de herramientas */}
-              <div className="no-scrollbar flex items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-white p-2 shadow-sm dark:bg-paper">
+              <div className="no-scrollbar flex touch-pan-x items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-white p-2 shadow-sm dark:bg-paper">
                 {TEXT_STYLES.map((s) => {
                   const active = lastStyle === s.id
                   return (
                     <button
                       key={s.id}
-                      onPointerDown={keepFocus}
+                      onMouseDown={keepFocus}
                       onClick={() => applyStyle(s)}
                       disabled={!hasText}
                       title={s.hint}
@@ -185,7 +188,7 @@ export default function TextoPage() {
                 })}
                 <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-line" />
                 <button
-                  onPointerDown={keepFocus}
+                  onMouseDown={keepFocus}
                   onClick={() => setShowEmoji(!showEmoji)}
                   className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-[13px] font-medium leading-none transition-all ${
                     showEmoji
@@ -229,7 +232,7 @@ export default function TextoPage() {
                     {EMOJI_GROUPS.map((g) => (
                       <button
                         key={g.id}
-                        onPointerDown={keepFocus}
+                        onMouseDown={keepFocus}
                         onClick={() => setEmojiTab(g.id)}
                         className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-all ${
                           emojiTab === g.id
@@ -246,7 +249,7 @@ export default function TextoPage() {
                     {activeGroup.items.map((e) => (
                       <button
                         key={e}
-                        onPointerDown={keepFocus}
+                        onMouseDown={keepFocus}
                         onClick={() => insertEmoji(e)}
                         className="flex h-10 items-center justify-center rounded-lg text-[22px] transition-transform hover:scale-125 hover:bg-paper active:scale-110"
                         aria-label={`Insertar ${e}`}
@@ -294,7 +297,7 @@ export default function TextoPage() {
             </div>
 
             {/* Consejos */}
-            <aside className="lg:col-span-5">
+            <aside className="min-w-0 lg:col-span-5">
               <div className="rounded-2xl border border-line bg-white p-6 dark:bg-paper">
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft">
                   Cómo funciona
