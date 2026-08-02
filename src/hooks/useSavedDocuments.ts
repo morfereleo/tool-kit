@@ -73,8 +73,8 @@ export function useSavedDocuments<T>(storageKey: string) {
   return { docs, save, remove, duplicate }
 }
 
-export function formatDocDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('es-VE', {
+export function formatDocDate(ts: number, locale = 'es-VE'): string {
+  return new Date(ts).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',

@@ -75,7 +75,9 @@ const FRAKTUR_EXTRA: Record<string, string> = { C: 'ℭ', H: 'ℌ', I: 'ℑ', R:
 export type TextStyle = {
   id: string
   label: string
+  labelEn: string
   hint: string
+  hintEn: string
   apply: (t: string) => string
 }
 
@@ -83,67 +85,89 @@ export const TEXT_STYLES: TextStyle[] = [
   {
     id: 'bold',
     label: 'Negrita',
+    labelEn: 'Bold',
     hint: 'El clásico para titulares',
+    hintEn: 'The classic for headlines',
     apply: styled(0x1d5d4, 0x1d5ee, 0x1d7ec),
   },
   {
     id: 'italic',
     label: 'Cursiva',
+    labelEn: 'Italic',
     hint: 'Elegante y fluida',
+    hintEn: 'Elegant and fluid',
     apply: styled(0x1d608, 0x1d622),
   },
   {
     id: 'bold-italic',
     label: 'Negrita cursiva',
+    labelEn: 'Bold italic',
     hint: 'Doble énfasis',
+    hintEn: 'Double emphasis',
     apply: styled(0x1d63c, 0x1d656),
   },
   {
     id: 'serif-bold',
     label: 'Serif negrita',
+    labelEn: 'Serif bold',
     hint: 'Aire editorial',
+    hintEn: 'Editorial feel',
     apply: styled(0x1d400, 0x1d41a, 0x1d7ce),
   },
   {
     id: 'serif-italic',
     label: 'Serif cursiva',
+    labelEn: 'Serif italic',
     hint: 'Sutil y clásica',
+    hintEn: 'Subtle and classic',
     apply: styled(0x1d434, 0x1d44e, undefined, { h: 'ℎ' }),
   },
   {
     id: 'serif-bold-italic',
     label: 'Serif negrita cursiva',
+    labelEn: 'Serif bold italic',
     hint: 'Máximo carácter',
+    hintEn: 'Maximum character',
     apply: styled(0x1d468, 0x1d482),
   },
   {
     id: 'script',
     label: 'Manuscrita',
+    labelEn: 'Script',
     hint: 'Caligrafía delicada',
+    hintEn: 'Delicate handwriting',
     apply: styled(0x1d49c, 0x1d4b6, undefined, SCRIPT_EXTRA),
   },
   {
     id: 'script-bold',
     label: 'Manuscrita negrita',
+    labelEn: 'Bold script',
     hint: 'Firma con presencia',
+    hintEn: 'A signature with presence',
     apply: styled(0x1d4d0, 0x1d4ea),
   },
   {
     id: 'fraktur',
     label: 'Gótica',
+    labelEn: 'Fraktur',
     hint: 'Estilo antiguo',
+    hintEn: 'Old-school style',
     apply: styled(0x1d504, 0x1d51c, undefined, FRAKTUR_EXTRA),
   },
   {
     id: 'mono',
     label: 'Monoespaciada',
+    labelEn: 'Monospace',
     hint: 'Tipo máquina de escribir',
+    hintEn: 'Typewriter look',
     apply: styled(0x1d670, 0x1d68a, 0x1d7f6),
   },
   {
     id: 'double',
     label: 'Doble trazo',
+    labelEn: 'Double-struck',
     hint: 'Geométrica y moderna',
+    hintEn: 'Geometric and modern',
     apply: styled(0x1d538, 0x1d552, 0x1d7d8, {
       C: 'ℂ',
       H: 'ℍ',
@@ -157,31 +181,41 @@ export const TEXT_STYLES: TextStyle[] = [
   {
     id: 'wide',
     label: 'Ancha',
+    labelEn: 'Wide',
     hint: 'Ocupa todo el espacio',
+    hintEn: 'Takes up the whole space',
     apply: styled(0xff21, 0xff41, 0xff10),
   },
   {
     id: 'smallcaps',
     label: 'Versalitas',
+    labelEn: 'Small caps',
     hint: 'Mayúsculas en miniatura',
+    hintEn: 'Miniature capitals',
     apply: (t) => t.replace(/[a-z]/g, (c) => SMALLCAPS_MAP[c] ?? c),
   },
   {
     id: 'circled',
     label: 'Burbujas',
+    labelEn: 'Bubbles',
     hint: 'Letras en círculo',
+    hintEn: 'Letters in circles',
     apply: styled(0x24b6, 0x24d0, undefined, CIRCLED_EXTRA),
   },
   {
     id: 'strike',
     label: 'Tachado',
+    labelEn: 'Strikethrough',
     hint: 'Para correcciones con humor',
+    hintEn: 'For tongue-in-cheek edits',
     apply: combine('̶'),
   },
   {
     id: 'underline',
     label: 'Subrayado',
+    labelEn: 'Underline',
     hint: 'Resalta sin gritar',
+    hintEn: 'Highlights without shouting',
     apply: combine('̲'),
   },
 ]
@@ -189,6 +223,7 @@ export const TEXT_STYLES: TextStyle[] = [
 export type EmojiGroup = {
   id: string
   label: string
+  labelEn: string
   items: string[]
 }
 
@@ -196,6 +231,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'caritas',
     label: 'Caritas',
+    labelEn: 'Faces',
     items: [
       '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
       '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘',
@@ -207,6 +243,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'gestos',
     label: 'Gestos',
+    labelEn: 'Gestures',
     items: [
       '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '👏',
       '🙌', '🙏', '💪', '🤝', '✍️', '👋', '🖐️', '✋',
@@ -217,6 +254,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'corazones',
     label: 'Corazones',
+    labelEn: 'Hearts',
     items: [
       '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
       '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
@@ -226,6 +264,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'negocios',
     label: 'Negocios',
+    labelEn: 'Business',
     items: [
       '💼', '📊', '📈', '📉', '💰', '💵', '💳', '🏦',
       '📅', '🗓️', '⏰', '⏳', '📌', '📍', '📎', '✂️',
@@ -236,6 +275,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'objetos',
     label: 'Objetos',
+    labelEn: 'Objects',
     items: [
       '📱', '💻', '🖥️', '⌨️', '🖱️', '📷', '🎥', '🎬',
       '🎧', '🎤', '🎨', '✏️', '📚', '📖', '🔗', '🛒',
@@ -246,6 +286,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   {
     id: 'naturaleza',
     label: 'Naturaleza',
+    labelEn: 'Nature',
     items: [
       '🌸', '🌺', '🌻', '🌹', '🌷', '🍀', '🌿', '🌵',
       '🌴', '🍁', '🍂', '🦋', '🐝', '🐞', '🌎', '🌍',
