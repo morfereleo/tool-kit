@@ -1,6 +1,12 @@
+let currentLocale = 'es-VE'
+
+export function setNumLocale(l: string) {
+  currentLocale = l
+}
+
 export const fmt = (n: number, decimals = 2): string => {
   if (!isFinite(n)) return '—'
-  return new Intl.NumberFormat('es-VE', {
+  return new Intl.NumberFormat(currentLocale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(n)
