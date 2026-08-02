@@ -1,10 +1,8 @@
 import { useRef, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import { TOOLS } from '@/lib/tools'
-import { EMOJI_GROUPS, TEXT_STYLES, charCount } from '@/lib/textStyles'
+import { EMOJI_GROUPS, TEXT_STYLES, charCount, type TextStyle } from '@/lib/textStyles'
 import { IconCheck, IconSpark } from '@/components/icons'
-
-const SAMPLE = 'Así se verá tu texto 123'
 
 const LIMITS = [
   { id: 'x', label: 'X / Twitter', max: 280 },
@@ -20,7 +18,7 @@ function LimitChip({ label, max, len }: { label: string; max: number; len: numbe
   return (
     <span
       className="flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 font-mono text-[11px] font-medium dark:bg-paper"
-      style={color ? { color, borderColor: `${color}55` } : undefined}
+      style={color ? { color, borderColor: `${color}55` } : { color: 'var(--tw-text-opacity,inherit)' }}
     >
       <span className="text-inkmuted">{label}</span>
       <span style={color ? { color } : undefined} className={color ? '' : 'text-inksoft'}>
@@ -30,22 +28,67 @@ function LimitChip({ label, max, len }: { label: string; max: number; len: numbe
   )
 }
 
+/** Evita que el botón robe el foco del textarea (así se conserva la selección) */
+const keepFocus = (e: React.PointerEvent) => e.preventDefault()
+
 export default function TextoPage() {
   const tool = TOOLS.find((t) => t.id === 'texto')!
   const [text, setText] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [emojiTab, setEmojiTab] = useState(EMOJI_GROUPS[0].id)
-  const [copied, setCopied] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [lastStyle, setLastStyle] = useState<string | null>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
+  const selRef = useRef({ start: 0, end: 0 })
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const styleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const len = charCount(text)
   const hasText = text.trim().length > 0
 
+  const syncSelection = () => {
+    const el = taRef.current
+    if (el) selRef.current = { start: el.selectionStart, end: el.selectionEnd }
+  }
+
+  /** Aplica el estilo SOLO al texto seleccionado (o a todo si no hay selección) */
+  const applyStyle = (s: TextStyle) => {
+    if (!hasText) return
+    const el = taRef.current
+    let start = el?.selectionStart ?? selRef.current.start
+    let end = el?.selectionEnd ?? selRef.current.end
+    if (start > text.length || end > text.length) {
+      start = 0
+      end = text.length
+    }
+    const whole = start === end
+    if (whole) {
+      start = 0
+      end = text.length
+    }
+    const styled = s.apply(text.slice(start, end))
+    if (styled === text.slice(start, end) && !whole) return
+    const next = text.slice(0, start) + styled + text.slice(end)
+    setText(next)
+    requestAnimationFrame(() => {
+      if (el) {
+        el.focus()
+        if (whole) {
+          el.setSelectionRange(next.length, next.length)
+        } else {
+          el.setSelectionRange(start, start + styled.length)
+        }
+      }
+    })
+    if (styleTimer.current) clearTimeout(styleTimer.current)
+    setLastStyle(s.id)
+    styleTimer.current = setTimeout(() => setLastStyle(null), 1200)
+  }
+
   const insertEmoji = (emoji: string) => {
     const el = taRef.current
-    const start = el?.selectionStart ?? text.length
-    const end = el?.selectionEnd ?? text.length
+    const start = el?.selectionStart ?? selRef.current.start ?? text.length
+    const end = el?.selectionEnd ?? selRef.current.end ?? text.length
     const next = text.slice(0, start) + emoji + text.slice(end)
     const caret = start + emoji.length
     setText(next)
@@ -57,31 +100,30 @@ export default function TextoPage() {
     })
   }
 
-  const copy = async (id: string, value: string) => {
+  const copyAll = async () => {
     try {
-      await navigator.clipboard.writeText(value)
+      await navigator.clipboard.writeText(text)
     } catch {
       const ta = document.createElement('textarea')
-      ta.value = value
+      ta.value = text
       document.body.appendChild(ta)
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
     if (copyTimer.current) clearTimeout(copyTimer.current)
-    setCopied(id)
-    copyTimer.current = setTimeout(() => setCopied(null), 1600)
+    setCopied(true)
+    copyTimer.current = setTimeout(() => setCopied(false), 1600)
   }
 
   const activeGroup = EMOJI_GROUPS.find((g) => g.id === emojiTab)!
 
   return (
     <BrandShell tool={tool}>
-      {/* ——— Editor ——— */}
-      <section className="border-b border-line">
+      <section>
         <div className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
           <div className="grid gap-8 lg:grid-cols-12">
-            {/* Texto */}
+            {/* Editor */}
             <div className="lg:col-span-7">
               <label htmlFor="copy-input" className="field-label">
                 Tu copy
@@ -90,19 +132,61 @@ export default function TextoPage() {
                 id="copy-input"
                 ref={taRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={7}
+                onChange={(e) => {
+                  setText(e.target.value)
+                  syncSelection()
+                }}
+                onSelect={syncSelection}
+                onKeyUp={syncSelection}
+                onMouseUp={syncSelection}
+                rows={8}
                 placeholder="Escribe o pega aquí el texto de tu publicación…"
                 className="field-box resize-y leading-relaxed"
               />
 
+              {/* Barra de estilos */}
+              <div className="mt-4">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft">
+                  Estilos — toca para aplicar
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {TEXT_STYLES.map((s) => {
+                    const active = lastStyle === s.id
+                    return (
+                      <button
+                        key={s.id}
+                        onPointerDown={keepFocus}
+                        onClick={() => applyStyle(s)}
+                        disabled={!hasText}
+                        title={s.hint}
+                        className={`rounded-full border px-3.5 py-2 text-[14px] leading-none transition-all ${
+                          active
+                            ? 'border-transparent text-white'
+                            : hasText
+                              ? 'border-line bg-white text-ink hover:-translate-y-0.5 hover:border-inkmuted hover:shadow-sm dark:bg-paper'
+                              : 'border-line/60 text-inkmuted/60'
+                        }`}
+                        style={active ? { backgroundColor: tool.accent } : undefined}
+                      >
+                        {s.apply(s.label)}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-inkmuted">
+                  Selecciona un fragmento del texto y toca un estilo: solo esa parte cambia. Si no
+                  seleccionas nada, se aplica a todo el copy.
+                </p>
+              </div>
+
               {/* Contadores + acciones */}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-5 flex flex-wrap items-center gap-2">
                 {LIMITS.map((l) => (
                   <LimitChip key={l.id} label={l.label} max={l.max} len={len} />
                 ))}
                 <span className="flex-1" />
                 <button
+                  onPointerDown={keepFocus}
                   onClick={() => setShowEmoji(!showEmoji)}
                   className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-all ${
                     showEmoji
@@ -115,12 +199,27 @@ export default function TextoPage() {
                   Emojis
                 </button>
                 {hasText && (
-                  <button
-                    onClick={() => setText('')}
-                    className="rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-inksoft transition-colors hover:border-inkmuted hover:text-ink dark:bg-paper"
-                  >
-                    Limpiar
-                  </button>
+                  <>
+                    <button
+                      onClick={copyAll}
+                      className="flex items-center gap-2 rounded-full border border-transparent px-4 py-1.5 text-[13px] font-medium text-white transition-all"
+                      style={{ backgroundColor: tool.accent }}
+                    >
+                      {copied ? (
+                        <>
+                          <IconCheck className="h-4 w-4" /> ¡Copiado!
+                        </>
+                      ) : (
+                        'Copiar texto'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setText('')}
+                      className="rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-inksoft transition-colors hover:border-inkmuted hover:text-ink dark:bg-paper"
+                    >
+                      Limpiar
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -134,6 +233,7 @@ export default function TextoPage() {
                     {EMOJI_GROUPS.map((g) => (
                       <button
                         key={g.id}
+                        onPointerDown={keepFocus}
                         onClick={() => setEmojiTab(g.id)}
                         className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-all ${
                           emojiTab === g.id
@@ -150,6 +250,7 @@ export default function TextoPage() {
                     {activeGroup.items.map((e) => (
                       <button
                         key={e}
+                        onPointerDown={keepFocus}
                         onClick={() => insertEmoji(e)}
                         className="flex h-10 items-center justify-center rounded-lg text-[22px] transition-transform hover:scale-125 hover:bg-paper active:scale-110"
                         aria-label={`Insertar ${e}`}
@@ -174,15 +275,15 @@ export default function TextoPage() {
                 <ul className="mt-4 space-y-3 text-sm leading-relaxed text-inksoft">
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
-                    Escribe tu copy, elige un estilo de la galería y tócalo para copiarlo.
+                    Selecciona la parte del texto que quieras destacar y toca un estilo: solo ese fragmento cambia, el resto queda igual.
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
-                    Pégalo directo en Instagram, X, TikTok, LinkedIn o WhatsApp — la negrita y la cursiva se ven sin necesidad de apps externas.
+                    Combina estilos en un mismo copy: el título en negrita, una frase en cursiva, una palabra tachada o en burbujas.
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tool.accent }} />
-                    Son caracteres Unicode reales: funcionan en biografías, títulos y comentarios donde el formato normal no está disponible.
+                    Cuando esté listo, toca «Copiar texto» y pégalo en Instagram, X, TikTok, LinkedIn o WhatsApp — el formato se conserva.
                   </li>
                 </ul>
                 <div
@@ -197,72 +298,6 @@ export default function TextoPage() {
               </div>
             </aside>
           </div>
-        </div>
-      </section>
-
-      {/* ——— Galería de estilos ——— */}
-      <section>
-        <div className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-inkmuted">
-            Estilos disponibles — toca para copiar
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TEXT_STYLES.map((s, i) => {
-              const preview = hasText ? s.apply(text) : s.apply(SAMPLE)
-              const isCopied = copied === s.id
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => hasText && copy(s.id, s.apply(text))}
-                  disabled={!hasText}
-                  className={`group relative overflow-hidden rounded-2xl border bg-white p-5 text-left transition-all dark:bg-paper ${
-                    hasText
-                      ? 'border-line hover:-translate-y-0.5 hover:shadow-md'
-                      : 'border-line/60 opacity-70'
-                  }`}
-                  style={{
-                    animation: 'menu-item-in 0.4s ease-out both',
-                    animationDelay: `${i * 30}ms`,
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-inksoft">
-                      {s.label}
-                    </span>
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all ${
-                        isCopied ? 'scale-110' : 'opacity-0 group-hover:opacity-100'
-                      }`}
-                      style={{
-                        backgroundColor: isCopied ? tool.accent : `${tool.accent}1A`,
-                        color: isCopied ? '#fff' : tool.accent,
-                      }}
-                    >
-                      {isCopied ? (
-                        <IconCheck className="h-3.5 w-3.5" />
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
-                          <rect x="9" y="9" width="12" height="12" rx="2" />
-                          <path d="M5 15V5a2 2 0 012-2h10" strokeLinecap="round" />
-                        </svg>
-                      )}
-                    </span>
-                  </div>
-                  <p className={`mt-3 break-words text-lg leading-snug ${hasText ? 'text-ink' : 'text-inkmuted/70'}`}>
-                    {preview}
-                  </p>
-                  <p className="mt-3 text-[12px] text-inkmuted">{isCopied ? '¡Copiado!' : s.hint}</p>
-                </button>
-              )
-            })}
-          </div>
-
-          {!hasText && (
-            <p className="mt-6 text-center text-sm text-inkmuted">
-              Escribe tu copy arriba y luego toca cualquier estilo para copiarlo ✨
-            </p>
-          )}
         </div>
       </section>
     </BrandShell>
