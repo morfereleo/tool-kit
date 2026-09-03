@@ -29,10 +29,11 @@ const setTag = (html, pattern, replacement, label, route) => {
   return html.replace(pattern, replacement)
 }
 
-for (const [route, { title, desc }] of Object.entries(routes)) {
+for (const [route, { title, desc, image }] of Object.entries(routes)) {
   const t = esc(title.es)
   const d = esc(desc.es)
   const url = `${siteUrl}${route === '/' ? '/' : route}`
+  const img = `${siteUrl}${image}`
 
   let html = base
   html = setTag(html, /<title>[^<]*<\/title>/, `<title>${t}</title>`, '<title>', route)
@@ -55,6 +56,8 @@ for (const [route, { title, desc }] of Object.entries(routes)) {
   html = setTag(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${url}$2`, 'og:url', route)
   html = setTag(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${t}$2`, 'twitter:title', route)
   html = setTag(html, /(<meta\s+name="twitter:description"\s+content=")[^"]*(")/s, `$1${d}$2`, 'twitter:description', route)
+  html = setTag(html, /(<meta property="og:image" content=")[^"]*(")/, `$1${img}$2`, 'og:image', route)
+  html = setTag(html, /(<meta name="twitter:image" content=")[^"]*(")/, `$1${img}$2`, 'twitter:image', route)
 
   const outDir = route === '/' ? dist : join(dist, route.slice(1))
   mkdirSync(outDir, { recursive: true })

@@ -6,6 +6,7 @@ export const SITE_URL = seoData.siteUrl
 type SeoEntry = {
   title: { es: string; en: string }
   desc: { es: string; en: string }
+  image: string
 }
 
 /** Título y descripción por ruta, pensados para búsqueda long-tail.
@@ -30,6 +31,8 @@ export function applySeo(path: string, lang: Lang) {
   setMeta('meta[property="og:url"]', url)
   setMeta('meta[name="twitter:title"]', title)
   setMeta('meta[name="twitter:description"]', desc)
+  setMeta('meta[property="og:image"]', `${SITE_URL}${entry.image}`)
+  setMeta('meta[name="twitter:image"]', `${SITE_URL}${entry.image}`)
 
   let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
   if (!canonical) {
