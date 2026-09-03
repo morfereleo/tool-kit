@@ -399,20 +399,21 @@ export default function ServiciosPage() {
           <Step n="01" icon={<IconWallet />} title={t('sv.base')}>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="field-label">{t('sv.income')}</label>
-                <NumInput value={base.monthlyGoal} onChange={base.setMonthlyGoal} />
+                <label className="field-label" htmlFor="sv-monthly-goal">{t('sv.income')}</label>
+                <NumInput id="sv-monthly-goal" value={base.monthlyGoal} onChange={base.setMonthlyGoal} />
               </div>
               <div>
-                <label className="field-label">{t('sv.billable')}</label>
-                <NumInput value={base.billableHours} onChange={base.setBillableHours} />
+                <label className="field-label" htmlFor="sv-billable-hours">{t('sv.billable')}</label>
+                <NumInput id="sv-billable-hours" value={base.billableHours} onChange={base.setBillableHours} />
               </div>
               <div>
-                <label className="field-label">{t('sv.rateOverride')}</label>
-                <NumInput value={base.rateOverride} onChange={base.setRateOverride} placeholder={fmt(base.baseRate)} />
+                <label className="field-label" htmlFor="sv-rate-override">{t('sv.rateOverride')}</label>
+                <NumInput id="sv-rate-override" value={base.rateOverride} onChange={base.setRateOverride} placeholder={fmt(base.baseRate)} />
               </div>
               <div>
-                <label className="field-label">{t('sv.countryTax')}</label>
+                <label className="field-label" htmlFor="sv-country-tax">{t('sv.countryTax')}</label>
                 <select
+                  id="sv-country-tax"
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
                   className="field-box font-mono text-sm"
@@ -443,8 +444,8 @@ export default function ServiciosPage() {
                         className="field-box py-2 text-sm"
                       />
                       <div>
-                        <label className="field-label sm:hidden">{t('sv.hours')}</label>
-                        <NumInput value={p.hours} onChange={(v) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, hours: v } : x)))} />
+                        <label className="field-label sm:hidden" htmlFor={`sv-phase-${p.id}-hours`}>{t('sv.hours')}</label>
+                        <NumInput id={`sv-phase-${p.id}-hours`} value={p.hours} onChange={(v) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, hours: v } : x)))} />
                       </div>
                       <select
                         value={p.factor}
@@ -500,13 +501,13 @@ export default function ServiciosPage() {
               <Step n="04" icon={<IconShield />} title={t('sv.contingency')}>
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="field-label">{t('sv.risk')}</label>
-                    <NumInput value={risk} onChange={setRisk} />
+                    <label className="field-label" htmlFor="sv-risk">{t('sv.risk')}</label>
+                    <NumInput id="sv-risk" value={risk} onChange={setRisk} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.riskHint')}</p>
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.profit')}</label>
-                    <NumInput value={profit} onChange={setProfit} />
+                    <label className="field-label" htmlFor="sv-profit">{t('sv.profit')}</label>
+                    <NumInput id="sv-profit" value={profit} onChange={setProfit} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.profitHint')}</p>
                   </div>
                 </div>
@@ -603,8 +604,8 @@ export default function ServiciosPage() {
                       </div>
 
                       <div className="mt-4 border-t border-line pt-3">
-                        <label className="field-label">{t('sv.pkgHours')}</label>
-                        <NumInput value={pk.hours} onChange={(v) => setTiers((prev) => prev.map((x) => (x.id === pk.id ? { ...x, hours: v } : x)))} />
+                        <label className="field-label" htmlFor={`sv-tier-${pk.id}-hours`}>{t('sv.pkgHours')}</label>
+                        <NumInput id={`sv-tier-${pk.id}-hours`} value={pk.hours} onChange={(v) => setTiers((prev) => prev.map((x) => (x.id === pk.id ? { ...x, hours: v } : x)))} />
                       </div>
 
                       <div className="mt-4 rounded-xl bg-paper p-3 font-mono text-[11px] leading-relaxed">
@@ -632,8 +633,8 @@ export default function ServiciosPage() {
 
               <Step n="03" icon={<IconReceipt />} title={t('sv.pkgCosts')}>
                 <div className="max-w-xs">
-                  <label className="field-label">{t('sv.pkgCostsLabel')}</label>
-                  <NumInput value={pkgCosts} onChange={setPkgCosts} />
+                  <label className="field-label" htmlFor="sv-pkg-costs">{t('sv.pkgCostsLabel')}</label>
+                  <NumInput id="sv-pkg-costs" value={pkgCosts} onChange={setPkgCosts} />
                 </div>
                 <p className="mt-3 font-mono text-[11px] leading-relaxed text-inkmuted">
                   {t('sv.pkgCostsNote')}
@@ -648,15 +649,16 @@ export default function ServiciosPage() {
               <Step n="02" icon={<IconTrend />} title={t('sv.impact')}>
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="field-label">{t('sv.impactValue')}</label>
-                    <NumInput value={impact} onChange={setImpact} />
+                    <label className="field-label" htmlFor="sv-impact-value">{t('sv.impactValue')}</label>
+                    <NumInput id="sv-impact-value" value={impact} onChange={setImpact} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
                       {t('sv.impactHint')}
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.share', { s: share })}</label>
+                    <label className="field-label" htmlFor="sv-share">{t('sv.share', { s: share })}</label>
                     <input
+                      id="sv-share"
                       type="range" min="5" max="30" value={share}
                       onChange={(e) => setShare(e.target.value)}
                       className="mt-3 w-full" style={{ accentColor: STEP_COLOR }}
@@ -680,16 +682,16 @@ export default function ServiciosPage() {
               >
                 <div className="grid gap-6 sm:grid-cols-3">
                   <div>
-                    <label className="field-label">{t('sv.yourPrice')}</label>
-                    <NumInput value={valPrice} onChange={setValPrice} placeholder={fmt(valor.suggested, 0)} />
+                    <label className="field-label" htmlFor="sv-your-price">{t('sv.yourPrice')}</label>
+                    <NumInput id="sv-your-price" value={valPrice} onChange={setValPrice} placeholder={fmt(valor.suggested, 0)} />
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.estHours')}</label>
-                    <NumInput value={valHours} onChange={setValHours} />
+                    <label className="field-label" htmlFor="sv-val-hours">{t('sv.estHours')}</label>
+                    <NumInput id="sv-val-hours" value={valHours} onChange={setValHours} />
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.directCostsUsd')}</label>
-                    <NumInput value={valCosts} onChange={setValCosts} />
+                    <label className="field-label" htmlFor="sv-val-costs">{t('sv.directCostsUsd')}</label>
+                    <NumInput id="sv-val-costs" value={valCosts} onChange={setValCosts} />
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap items-center gap-3 font-mono text-xs">
@@ -713,15 +715,16 @@ export default function ServiciosPage() {
               <Step n="02" icon={<IconRepeat />} title={t('sv.retAgreement')}>
                 <div className="grid gap-6 sm:grid-cols-3">
                   <div>
-                    <label className="field-label">{t('sv.retHours')}</label>
-                    <NumInput value={retHours} onChange={setRetHours} />
+                    <label className="field-label" htmlFor="sv-ret-hours">{t('sv.retHours')}</label>
+                    <NumInput id="sv-ret-hours" value={retHours} onChange={setRetHours} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
                       {t('sv.retGross', { v: fmt(retainer.gross) })}
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.retDiscount', { d: retDiscount })}</label>
+                    <label className="field-label" htmlFor="sv-ret-discount">{t('sv.retDiscount', { d: retDiscount })}</label>
                     <input
+                      id="sv-ret-discount"
                       type="range" min="0" max="25" value={retDiscount}
                       onChange={(e) => setRetDiscount(e.target.value)}
                       className="mt-3 w-full" style={{ accentColor: STEP_COLOR }}
@@ -731,8 +734,8 @@ export default function ServiciosPage() {
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">{t('sv.retMonths')}</label>
-                    <NumInput value={retMonths} onChange={setRetMonths} />
+                    <label className="field-label" htmlFor="sv-ret-months">{t('sv.retMonths')}</label>
+                    <NumInput id="sv-ret-months" value={retMonths} onChange={setRetMonths} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.retMonthsHint')}</p>
                   </div>
                 </div>

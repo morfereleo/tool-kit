@@ -155,6 +155,8 @@ export function useVeRates() {
   const reload = useCallback(() => load(true), [load])
 
   useEffect(() => {
+    // sincronización con la API externa: el setStatus('loading') inicial es intencional
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load(false)
   }, [load])
 

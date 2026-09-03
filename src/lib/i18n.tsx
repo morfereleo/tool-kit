@@ -1,3 +1,7 @@
+/* eslint-disable react-refresh/only-export-components --
+   este módulo exporta el provider junto a useT/useLang/dateLocale a propósito;
+   editar aquí recarga la página completa en dev, un trade-off aceptable frente
+   a partir el módulo que importan ~30 archivos. */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { setNumLocale } from '@/lib/format'
 
@@ -279,6 +283,7 @@ const STRINGS: Record<string, { es: string; en: string }> = {
     en: 'Drag the divider (or use ← →) to compare the original with the optimized version',
   },
   'compare.original': { es: 'Original', en: 'Original' },
+  'compare.webp': { es: 'Optimizada (WebP)', en: 'Optimized (WebP)' },
 
   /* ——— QR ——— */
   'qr.content': { es: 'Contenido del QR', en: 'QR content' },

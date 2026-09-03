@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from '@/components/Modal'
 import { fmt } from '@/lib/format'
 import { useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
@@ -245,11 +246,8 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
     } else {
       render()
     }
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, onClose, lang])
+  }, [data, lang])
 
   const download = () => {
     const canvas = canvasRef.current
@@ -262,46 +260,28 @@ export function DocumentModal({ data, onClose }: { data: DocumentData; onClose: 
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
+    <Modal
+      title={t('doc.modalTitle')}
+      subtitle={t('doc.modalNote')}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      footer={
+        <button
+          onClick={download}
+          className="flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          style={{ backgroundColor: ACCENT }}
+        >
+          {t('doc.download')}
+        </button>
+      }
     >
-      <div
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-paper shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-6 py-4">
-          <div>
-            <h3 className="font-grotesk text-lg font-bold">{t('doc.modalTitle')}</h3>
-            <p className="text-xs text-inkmuted">{t('doc.modalNote')}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label={t('ui.close')}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="overflow-y-auto bg-[color-mix(in_srgb,var(--facc,#DB2777)_3%,transparent)] p-5">
-          <canvas
-            ref={canvasRef}
-            className="mx-auto h-auto w-full max-w-[640px] rounded-xl border border-line bg-white shadow-lg"
-            style={{ aspectRatio: height ? `820 / ${height}` : undefined }}
-          />
-        </div>
-
-        <div className="border-t border-line p-4">
-          <button
-            onClick={download}
-            className="flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            style={{ backgroundColor: ACCENT }}
-          >
-            {t('doc.download')}
-          </button>
-        </div>
+      <div className="overflow-y-auto bg-[color-mix(in_srgb,var(--facc,#DB2777)_3%,transparent)] p-5">
+        <canvas
+          ref={canvasRef}
+          className="mx-auto h-auto w-full max-w-[640px] rounded-xl border border-line bg-white shadow-lg"
+          style={{ aspectRatio: height ? `820 / ${height}` : undefined }}
+        />
       </div>
-    </div>
+    </Modal>
   )
 }

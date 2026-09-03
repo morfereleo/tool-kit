@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from '@/components/Modal'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
@@ -211,20 +212,23 @@ export default function QuoteModal({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    draw(canvas, data, t, dateLocale(lang))
-    setReady(true)
+    // esperar las webfonts para que el PNG no salga con la fuente de fallback
+    let cancelled = false
+    const render = () => {
+      if (cancelled) return
+      draw(canvas, data, t, dateLocale(lang))
+      setReady(true)
+    }
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(render)
+    } else {
+      render()
+    }
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, lang])
-
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', onEsc)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onEsc)
-      document.body.style.overflow = ''
-    }
-  }, [onClose])
 
   const download = () => {
     const canvas = canvasRef.current
@@ -237,39 +241,21 @@ export default function QuoteModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-paper shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <p className="font-grotesk text-lg font-bold tracking-tight">{t('quote.modalTitle')}</p>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label={t('ui.close')}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-5">
-          <canvas ref={canvasRef} className="w-full rounded-xl border border-line" />
-          <button
-            onClick={download}
-            disabled={!ready}
-            className="mt-5 w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
-            style={{ backgroundColor: ACCENT }}
-          >
-            {t('quote.download')}
-          </button>
-          <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
-            {t('quote.modalNote')}
-          </p>
-        </div>
+    <Modal title={t('quote.modalTitle')} onClose={onClose}>
+      <div className="overflow-y-auto p-5">
+        <canvas ref={canvasRef} className="w-full rounded-xl border border-line" />
+        <button
+          onClick={download}
+          disabled={!ready}
+          className="mt-5 w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
+          style={{ backgroundColor: ACCENT }}
+        >
+          {t('quote.download')}
+        </button>
+        <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
+          {t('quote.modalNote')}
+        </p>
       </div>
-    </div>
+    </Modal>
   )
 }

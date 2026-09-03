@@ -111,6 +111,7 @@ export default function TasasPage() {
                     <input
                       type="text"
                       inputMode="decimal"
+                      aria-label={t(m.labelKey)}
                       value={edited[m.key] ?? (r != null ? r.toFixed(2) : '')}
                       onChange={(e) => setEdited((p) => ({ ...p, [m.key]: e.target.value }))}
                       placeholder={status === 'loading' ? '…' : '0.00'}
@@ -157,12 +158,13 @@ export default function TasasPage() {
       <section>
         <div className="mx-auto grid max-w-6xl md:grid-cols-2">
           <div className="border-b border-line px-5 py-10 md:border-b-0 md:border-r md:px-8 md:py-14">
-            <label className="field-label">{t('tasas.amount')}</label>
+            <label htmlFor="tasas-amount" className="field-label">{t('tasas.amount')}</label>
             <div className="relative">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-lg text-inkmuted">
                 {fromMeta.symbol}
               </span>
               <input
+                id="tasas-amount"
                 type="text"
                 inputMode="decimal"
                 value={amount}
@@ -172,7 +174,7 @@ export default function TasasPage() {
               />
             </div>
 
-            <label className="field-label mt-10 block">{t('tasas.from')}</label>
+            <p className="field-label mt-10 block">{t('tasas.from')}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[{ key: 'VES' as const, label: t('tasas.bolivares'), symbol: 'Bs.' }, ...RATE_META.map((m) => ({ key: m.key, label: t(m.labelKey), symbol: m.symbol }))].map((m) => (
                 <button

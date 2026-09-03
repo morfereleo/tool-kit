@@ -43,13 +43,16 @@ function TextInput({
   value,
   onChange,
   placeholder,
+  id,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
+  id?: string
 }) {
   return (
     <input
+      id={id}
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -248,31 +251,31 @@ export default function AcuerdoPage() {
           <Step n="01" icon={<IconUsers />} title={t('ac.parties')} color={ACCENT}>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label className="field-label">
+                <label className="field-label" htmlFor="ac-client-name">
                   {t('ac.client')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={client} onChange={setClient} placeholder={t('ac.clientPh')} />
+                  <TextInput id="ac-client-name" value={client} onChange={setClient} placeholder={t('ac.clientPh')} />
                 </div>
-                <label className="field-label mt-4 !text-[10px]">
+                <label className="field-label mt-4 !text-[10px]" htmlFor="ac-client-id">
                   {t('ac.idNum')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={clientId} onChange={setClientId} placeholder={t('ac.clientIdPh')} />
+                  <TextInput id="ac-client-id" value={clientId} onChange={setClientId} placeholder={t('ac.clientIdPh')} />
                 </div>
               </div>
               <div>
-                <label className="field-label">
+                <label className="field-label" htmlFor="ac-provider-name">
                   {t('ac.provider')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={provider} onChange={setProvider} placeholder={t('ac.providerPh')} />
+                  <TextInput id="ac-provider-name" value={provider} onChange={setProvider} placeholder={t('ac.providerPh')} />
                 </div>
-                <label className="field-label mt-4 !text-[10px]">
+                <label className="field-label mt-4 !text-[10px]" htmlFor="ac-provider-id">
                   {t('ac.idNum')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={providerId} onChange={setProviderId} placeholder={t('ac.providerIdPh')} />
+                  <TextInput id="ac-provider-id" value={providerId} onChange={setProviderId} placeholder={t('ac.providerIdPh')} />
                 </div>
               </div>
             </div>
@@ -355,33 +358,33 @@ export default function AcuerdoPage() {
               {scheme === 'fijo' ? (
                 <>
                   <div>
-                    <label className="field-label">
+                    <label className="field-label" htmlFor="ac-fixed-amount">
                       {t('ac.total')}
                     </label>
-                    <NumInput value={fixedAmount} onChange={setFixedAmount} />
+                    <NumInput id="ac-fixed-amount" value={fixedAmount} onChange={setFixedAmount} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="field-label">
+                    <label className="field-label" htmlFor="ac-fixed-term">
                       {t('ac.term')}
                     </label>
                     <div className="mt-1.5">
-                      <TextInput value={fixedTerm} onChange={setFixedTerm} placeholder={t('ac.termPh')} />
+                      <TextInput id="ac-fixed-term" value={fixedTerm} onChange={setFixedTerm} placeholder={t('ac.termPh')} />
                     </div>
                   </div>
                 </>
               ) : (
                 <>
                   <div>
-                    <label className="field-label">
+                    <label className="field-label" htmlFor="ac-pay-amount">
                       {t('ac.perPayment')}
                     </label>
-                    <NumInput value={payAmount} onChange={setPayAmount} />
+                    <NumInput id="ac-pay-amount" value={payAmount} onChange={setPayAmount} />
                   </div>
                   <div>
-                    <label className="field-label">
+                    <label className="field-label" htmlFor="ac-pay-count">
                       {t('ac.payCount')}
                     </label>
-                    <NumInput value={payCount} onChange={setPayCount} />
+                    <NumInput id="ac-pay-count" value={payCount} onChange={setPayCount} />
                   </div>
                   <div className="flex items-end pb-1.5">
                     <p className="font-mono text-[11px] leading-relaxed text-inkmuted">
@@ -433,17 +436,18 @@ export default function AcuerdoPage() {
                   </div>
                   <div className="mt-3 grid gap-4 pl-10 sm:grid-cols-[140px_1fr]">
                     <div>
-                      <label className="field-label !text-[10px]">
+                      <label className="field-label !text-[10px]" htmlFor={`ac-ms-${m.id}-amount`}>
                         {t('ac.msAmount')}
                       </label>
-                      <NumInput value={m.amount} onChange={(v) => setMilestone(m.id, { amount: v })} />
+                      <NumInput id={`ac-ms-${m.id}-amount`} value={m.amount} onChange={(v) => setMilestone(m.id, { amount: v })} />
                     </div>
                     <div>
-                      <label className="field-label !text-[10px]">
+                      <label className="field-label !text-[10px]" htmlFor={`ac-ms-${m.id}-when`}>
                         {t('ac.msWhen')}
                       </label>
                       <div className="mt-1">
                         <TextInput
+                          id={`ac-ms-${m.id}-when`}
                           value={m.when}
                           onChange={(v) => setMilestone(m.id, { when: v })}
                           placeholder={t('ac.msWhenPh')}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import InfoNote from '@/components/InfoNote'
 import QuoteModal, { type QuoteData } from '@/components/QuoteModal'
@@ -38,7 +38,7 @@ const keyTransform = (key: string) => (prev: string): string => {
   return next
 }
 
-/* ————— Country selector with flags ————— */
+/* ————— Country selector with flags (combobox ARIA select-only) ————— */
 function CountrySelect({
   value,
   onChange,
@@ -49,11 +49,17 @@ function CountrySelect({
   dark?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const [activeIdx, setActiveIdx] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+  const listId = useId()
   const t = useT()
   const { lang } = useLang()
   const selected = VAT_COUNTRIES.find((c) => c.code === value)
   const isCustom = value === 'CUSTOM'
+
+  // opciones en orden de render: países + "tasa libre" al final
+  const codes = [...VAT_COUNTRIES.map((c) => c.code), 'CUSTOM']
+  const optId = (i: number) => `${listId}-opt-${codes[i]}`
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -63,10 +69,77 @@ function CountrySelect({
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
+  useEffect(() => {
+    if (open) document.getElementById(optId(activeIdx))?.scrollIntoView({ block: 'nearest' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeIdx])
+
+  const openList = () => {
+    const cur = codes.indexOf(value)
+    setActiveIdx(cur === -1 ? 0 : cur)
+    setOpen(true)
+  }
+
+  const select = (code: string) => {
+    onChange(code)
+    setOpen(false)
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
+        e.preventDefault()
+        openList()
+      }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setActiveIdx((i) => Math.min(codes.length - 1, i + 1))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setActiveIdx((i) => Math.max(0, i - 1))
+        break
+      case 'Home':
+        e.preventDefault()
+        setActiveIdx(0)
+        break
+      case 'End':
+        e.preventDefault()
+        setActiveIdx(codes.length - 1)
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        select(codes[activeIdx])
+        break
+      case 'Escape':
+        e.preventDefault()
+        setOpen(false)
+        break
+      case 'Tab':
+        setOpen(false)
+        break
+    }
+  }
+
+  const optionClass = (idx: number, extra = '') =>
+    `flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+      idx === activeIdx ? 'bg-line/60' : 'hover:bg-line/40'
+    } ${extra}`
+
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-haspopup="listbox"
+        aria-activedescendant={open ? optId(activeIdx) : undefined}
+        onClick={() => (open ? setOpen(false) : openList())}
+        onKeyDown={onKeyDown}
         className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
           dark
             ? 'border-white/10 bg-white/5 hover:border-white/25'
@@ -102,17 +175,21 @@ function CountrySelect({
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-full z-30 mt-2 max-h-72 overflow-y-auto rounded-xl border border-line bg-paper shadow-xl shadow-ink/5">
-          {VAT_COUNTRIES.map((c) => (
+        <div
+          id={listId}
+          role="listbox"
+          className="absolute inset-x-0 top-full z-30 mt-2 max-h-72 overflow-y-auto rounded-xl border border-line bg-paper shadow-xl shadow-ink/5"
+        >
+          {VAT_COUNTRIES.map((c, i) => (
             <button
               key={c.code}
-              onClick={() => {
-                onChange(c.code)
-                setOpen(false)
-              }}
-              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                value === c.code ? 'bg-paper' : 'hover:bg-paper'
-              }`}
+              id={optId(i)}
+              role="option"
+              aria-selected={value === c.code}
+              tabIndex={-1}
+              onClick={() => select(c.code)}
+              onMouseEnter={() => setActiveIdx(i)}
+              className={optionClass(i)}
             >
               <img src={flagUrl(c.code)} alt="" className="h-5 w-7 rounded-[3px] object-cover shadow-sm" />
               <span className="flex-1 text-sm font-medium">{vatCountryName(c, lang)}</span>
@@ -122,13 +199,13 @@ function CountrySelect({
             </button>
           ))}
           <button
-            onClick={() => {
-              onChange('CUSTOM')
-              setOpen(false)
-            }}
-            className={`flex w-full items-center gap-3 border-t border-line px-4 py-2.5 text-left transition-colors ${
-              isCustom ? 'bg-paper' : 'hover:bg-paper'
-            }`}
+            id={optId(codes.length - 1)}
+            role="option"
+            aria-selected={isCustom}
+            tabIndex={-1}
+            onClick={() => select('CUSTOM')}
+            onMouseEnter={() => setActiveIdx(codes.length - 1)}
+            className={optionClass(codes.length - 1, 'border-t border-line')}
           >
             <span className="flex h-5 w-7 items-center justify-center rounded-[3px] bg-line text-[10px] font-bold text-inksoft">
               %
@@ -205,7 +282,13 @@ export default function IvaPage() {
   const [mode, setMode] = useState<'add' | 'extract'>('add')
   const [copied, setCopied] = useState(false)
   const [calcMode, setCalcMode] = useState<CalcMode>('simple')
-  const [noteHighlight, setNoteHighlight] = useState(false)
+  const [noteSeen, setNoteSeen] = useState(() => {
+    try {
+      return !!localStorage.getItem(LS_KEY)
+    } catch {
+      return false
+    }
+  })
   const [keypadOpen, setKeypadOpen] = useState(false)
   const [igtf, setIgtf] = useState(false)
   const [simpleCur, setSimpleCur] = useState<SimpleCur>('BS')
@@ -265,18 +348,11 @@ export default function IvaPage() {
     : null
   const totalEquiv = canConvert && hasAmount ? `${fxSymbol} ${fmt(totalShown / fxRate)}` : null
 
-  useEffect(() => {
-    if (hasAmount) {
-      try {
-        if (!localStorage.getItem(LS_KEY)) setNoteHighlight(true)
-      } catch {
-        setNoteHighlight(true)
-      }
-    }
-  }, [hasAmount])
+  // la nota fiscal se resalta al escribir el primer monto, hasta que el usuario la cierra
+  const noteHighlight = !noteSeen && hasAmount
 
   const dismissNote = () => {
-    setNoteHighlight(false)
+    setNoteSeen(true)
     try {
       localStorage.setItem(LS_KEY, '1')
     } catch { /* privado */ }

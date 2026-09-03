@@ -175,8 +175,9 @@ export default function QrPage() {
     <BrandShell tool={tool}>
       <section className="mx-auto grid max-w-6xl md:grid-cols-2">
         <div className="border-b border-line px-5 py-10 md:border-b-0 md:border-r md:px-8 md:py-14">
-          <label className="field-label">{t('qr.content')}</label>
+          <label htmlFor="qr-content" className="field-label">{t('qr.content')}</label>
           <textarea
+            id="qr-content"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
@@ -188,7 +189,7 @@ export default function QrPage() {
           </p>
 
           <div className="mt-8">
-            <label className="field-label">{t('qr.templates')}</label>
+            <p className="field-label">{t('qr.templates')}</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {TEMPLATES.map((tpl) => {
                 const active = activeTemplate?.name === tpl.name
@@ -224,7 +225,7 @@ export default function QrPage() {
           </div>
 
           <div className="mt-8">
-            <label className="field-label">{t('qr.codeColor')}{!activeTemplate && t('qr.custom')}</label>
+            <p className="field-label">{t('qr.codeColor')}{!activeTemplate && t('qr.custom')}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {SWATCHES.map((c) => (
                 <button
@@ -243,12 +244,13 @@ export default function QrPage() {
                 onChange={(e) => setFg(e.target.value)}
                 className="h-9 w-12 cursor-pointer rounded-full border border-line bg-transparent"
                 title={t('qr.freeColor')}
+                aria-label={t('qr.freeColor')}
               />
             </div>
           </div>
 
           <div className="mt-8">
-            <label className="field-label">{t('qr.bgColor')}</label>
+            <p className="field-label">{t('qr.bgColor')}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {BG_SWATCHES.map((c) => (
                 <button
@@ -267,12 +269,13 @@ export default function QrPage() {
                 onChange={(e) => setBg(e.target.value)}
                 className="h-9 w-12 cursor-pointer rounded-full border border-line bg-transparent"
                 title={t('qr.freeColor')}
+                aria-label={t('qr.freeColor')}
               />
             </div>
           </div>
 
           <div className="mt-8">
-            <label className="field-label">{t('qr.logo')}</label>
+            <p className="field-label">{t('qr.logo')}</p>
             <div className="mt-3">
               {logo ? (
                 <div className="flex items-center gap-3 rounded-xl border border-line p-2.5">
@@ -319,6 +322,7 @@ export default function QrPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                aria-label={t('qr.uploadLogo')}
                 onChange={(e) => onLogoFile(e.target.files?.[0])}
               />
               {logo && (
@@ -330,7 +334,7 @@ export default function QrPage() {
           </div>
 
           <div className="mt-8">
-            <label className="field-label">{t('qr.size')}</label>
+            <p className="field-label">{t('qr.size')}</p>
             <div className="mt-3 flex gap-2">
               {SIZES.map((s) => (
                 <button
