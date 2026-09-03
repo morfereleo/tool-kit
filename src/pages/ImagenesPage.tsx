@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react'
-import JSZip from 'jszip'
 import BrandShell from '@/components/BrandShell'
 import BeforeAfterModal from '@/components/BeforeAfterModal'
 import { TOOLS } from '@/lib/tools'
@@ -117,6 +116,7 @@ export default function ImagenesPage() {
     const done = jobs.filter((j) => j.status === 'done' && j.webpBlob)
     if (!done.length) return
     if (done.length === 1) return downloadOne(done[0])
+    const { default: JSZip } = await import('jszip')
     const zip = new JSZip()
     done.forEach((j) => zip.file(`${j.name}.webp`, j.webpBlob!))
     const blob = await zip.generateAsync({ type: 'blob' })
