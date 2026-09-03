@@ -1,95 +1,16 @@
 import type { Lang } from './i18n'
+import seoData from './seo-data.json'
 
-export const SITE_URL = 'https://tools.alejandrodanieles.com'
+export const SITE_URL = seoData.siteUrl
 
 type SeoEntry = {
   title: { es: string; en: string }
   desc: { es: string; en: string }
 }
 
-/** Título y descripción por ruta, pensados para búsqueda long-tail */
-const SEO: Record<string, SeoEntry> = {
-  '/': {
-    title: {
-      es: 'AD·Tools — Herramientas gratis para freelancers y emprendedores',
-      en: 'AD·Tools — Free tools for freelancers and entrepreneurs',
-    },
-    desc: {
-      es: 'Caja de herramientas gratuitas: calculadora de IVA con tasa BCV en vivo, conversor de divisas, optimizador de imágenes, generador de QR, cotizador de servicios y más. Sin registro.',
-      en: 'Free toolbox: VAT calculator with live BCV rates, currency converter, image optimizer, QR generator, service quoter and more. No sign-up.',
-    },
-  },
-  '/iva': {
-    title: {
-      es: 'Calculadora de IVA — 20 países, tasa BCV en vivo | AD·Tools',
-      en: 'VAT Calculator — 20 countries, live BCV rate | AD·Tools',
-    },
-    desc: {
-      es: 'Calcula el IVA de Venezuela (16%) y de 20 países: agrega o extrae el impuesto, convierte Bs ⇄ $ con la tasa BCV del día, suma el IGTF (3%) y genera tu orden de servicio. Gratis.',
-      en: 'Calculate VAT for Venezuela (16%) and 20 countries: add or extract tax, convert Bs ⇄ $ at the daily BCV rate, add IGTF (3%) and generate a service order. Free.',
-    },
-  },
-  '/tasas': {
-    title: {
-      es: 'Tasa BCV hoy — dólar, euro, paralelo y USDT en bolívares | AD·Tools',
-      en: 'BCV rate today — dollar, euro, parallel and USDT in bolívares | AD·Tools',
-    },
-    desc: {
-      es: 'Dólar BCV y euro BCV de hoy, dólar paralelo y USDT estimado, con variación vs. el día anterior y conversor entre monedas. Datos en vivo de fuentes públicas.',
-      en: "Today's BCV dollar and euro, parallel dollar and estimated USDT, with day-over-day change and a currency converter. Live data from public sources.",
-    },
-  },
-  '/imagenes': {
-    title: {
-      es: 'Optimizador de imágenes a WebP en lote | AD·Tools',
-      en: 'Batch image optimizer to WebP | AD·Tools',
-    },
-    desc: {
-      es: 'Convierte PNG y JPG a WebP en lote, ajusta calidad y tamaño, compara el antes y después y descarga en ZIP. Todo se procesa en tu navegador: nada se sube a ningún servidor.',
-      en: 'Convert PNG and JPG to WebP in batch, tune quality and size, compare before/after and download as ZIP. Everything runs in your browser — nothing is uploaded.',
-    },
-  },
-  '/qr': {
-    title: {
-      es: 'Generador de QR gratis con tu logo y colores | AD·Tools',
-      en: 'Free QR generator with your logo and colors | AD·Tools',
-    },
-    desc: {
-      es: 'Crea códigos QR con los colores de tu marca y tu logo al centro, con medidor de contraste para que siempre escaneen. Exporta en PNG o SVG vectorial, gratis.',
-      en: 'Create QR codes in your brand colors with your logo in the center and a contrast meter so they always scan. Export as PNG or vector SVG, free.',
-    },
-  },
-  '/servicios': {
-    title: {
-      es: 'Cotizador de servicios freelance — 4 modelos de pricing | AD·Tools',
-      en: 'Freelance service quoter — 4 pricing models | AD·Tools',
-    },
-    desc: {
-      es: 'Cotiza tus proyectos por horas y fases, paquetes, valor generado o retainer mensual, con márgenes, tarifa sugerida y orden de servicio en PNG. No vuelvas a cobrar de menos.',
-      en: 'Quote your projects by hours and phases, packages, value-based or monthly retainer, with margins, suggested rate and a PNG service order. Stop undercharging.',
-    },
-  },
-  '/acuerdo': {
-    title: {
-      es: 'Acuerdo de servicios freelance con hitos de pago | AD·Tools',
-      en: 'Freelance service agreement with payment milestones | AD·Tools',
-    },
-    desc: {
-      es: 'Genera un acuerdo de prestación de servicios con ítems, esquema de pago, hitos y firmas, exportable como documento PNG listo para enviar a tu cliente.',
-      en: 'Generate a service agreement with items, payment scheme, milestones and signatures, exportable as a PNG document ready to send to your client.',
-    },
-  },
-  '/texto': {
-    title: {
-      es: 'Texto con estilos para redes — negritas y cursivas Unicode | AD·Tools',
-      en: 'Styled text for social media — Unicode bold and italics | AD·Tools',
-    },
-    desc: {
-      es: 'Convierte tu copy en 𝗻𝗲𝗴𝗿𝗶𝘁𝗮𝘀, 𝘤𝘶𝘳𝘴𝘪𝘷𝘢𝘴 y 15 estilos Unicode con emojis, listos para pegar en X, Instagram o LinkedIn, con contadores de caracteres por red.',
-      en: 'Turn your copy into 𝗯𝗼𝗹𝗱, 𝘪𝘵𝘢𝘭𝘪𝘤 and 15 Unicode styles with emojis, ready to paste into X, Instagram or LinkedIn, with per-network character counters.',
-    },
-  },
-}
+/** Título y descripción por ruta, pensados para búsqueda long-tail.
+    La fuente de verdad es seo-data.json, compartida con scripts/prerender.mjs. */
+const SEO = seoData.routes as Record<string, SeoEntry>
 
 const setMeta = (selector: string, content: string) => {
   document.querySelector(selector)?.setAttribute('content', content)
