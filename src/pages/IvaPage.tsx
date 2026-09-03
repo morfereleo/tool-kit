@@ -496,7 +496,7 @@ export default function IvaPage() {
           >
             <span className="block text-[12px] font-semibold">{o.label}</span>
             <span className={`block font-mono text-[10px] ${fxSource === o.key ? 'text-white/70' : 'text-white/30'}`}>
-              {o.value != null ? fmt(o.value, 0) : '—'}
+              {o.value != null ? fmt(o.value) : '—'}
             </span>
           </button>
         ))}
