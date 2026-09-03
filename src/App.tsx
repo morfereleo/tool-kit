@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Header, Footer } from '@/components/Layout'
 import { useRoute } from '@/hooks/useRoute'
+import { useLang } from '@/lib/i18n'
+import { applySeo } from '@/lib/seo'
 import Home from '@/pages/Home'
 
 // Cada herramienta se carga bajo demanda: la home no paga el peso de las 7.
@@ -22,6 +24,12 @@ function PageLoader() {
 
 function App() {
   const route = useRoute()
+  const { lang } = useLang()
+
+  // título, descripción y canonical dinámicos por herramienta e idioma
+  useEffect(() => {
+    applySeo(route, lang)
+  }, [route, lang])
 
   let page: React.ReactNode
   switch (route) {
