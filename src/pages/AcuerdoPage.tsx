@@ -8,6 +8,7 @@ import { Step, NumInput, HealthPill } from '@/components/QuoteUI'
 import { IconUsers, IconList, IconWallet, IconFlag, IconDoc } from '@/components/icons'
 import { TicketModal, type TicketData } from '@/components/TicketModal'
 import { DocumentModal, type DocumentData } from '@/components/DocumentModal'
+import { dateLocale, useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
 
 const tool = TOOLS[5]
@@ -32,10 +33,10 @@ type AgreementPayload = {
   milestones: Milestone[]
 }
 
-const SCHEMES: { id: Scheme; name: string; hint: string }[] = [
-  { id: 'fijo', name: 'Monto fijo', hint: 'Un precio cerrado por todo el servicio' },
-  { id: 'mensual', name: 'Pago mensual', hint: 'Un monto igual cada mes' },
-  { id: 'quincenal', name: 'Pago quincenal', hint: 'Un monto igual cada quincena' },
+const SCHEMES: { id: Scheme; nameKey: string; hintKey: string }[] = [
+  { id: 'fijo', nameKey: 'ac.s.fijo.name', hintKey: 'ac.s.fijo.hint' },
+  { id: 'mensual', nameKey: 'ac.s.mensual.name', hintKey: 'ac.s.mensual.hint' },
+  { id: 'quincenal', nameKey: 'ac.s.quincenal.name', hintKey: 'ac.s.quincenal.hint' },
 ]
 
 function TextInput({
@@ -59,6 +60,8 @@ function TextInput({
 }
 
 export default function AcuerdoPage() {
+  const { lang } = useLang()
+  const t = useT()
   const nextId = useRef(100)
   const nid = () => nextId.current++
 
@@ -78,14 +81,14 @@ export default function AcuerdoPage() {
   // ——— paso 03: esquema ———
   const [scheme, setScheme] = useState<Scheme>('fijo')
   const [fixedAmount, setFixedAmount] = useState('400')
-  const [fixedTerm, setFixedTerm] = useState('4 semanas')
+  const [fixedTerm, setFixedTerm] = useState(() => t('ac.termDefault'))
   const [payAmount, setPayAmount] = useState('150')
   const [payCount, setPayCount] = useState('4')
 
   // ——— paso 04: hitos ———
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    { id: 11, name: 'Anticipo', amount: '', when: 'Al firmar el acuerdo' },
-    { id: 12, name: 'Entrega final', amount: '', when: 'Contra entrega del servicio' },
+  const [milestones, setMilestones] = useState<Milestone[]>(() => [
+    { id: 11, name: t('ac.d.upfront'), amount: '', when: t('ac.d.onSigning') },
+    { id: 12, name: t('ac.d.final'), amount: '', when: t('ac.d.onDelivery') },
   ])
 
   const [ticket, setTicket] = useState<TicketData | null>(null)
@@ -130,11 +133,11 @@ export default function AcuerdoPage() {
   const handleNew = () => {
     setClient(''); setClientId(''); setProvider(''); setProviderId('')
     setItems([{ id: nid(), text: '' }, { id: nid(), text: '' }, { id: nid(), text: '' }])
-    setScheme('fijo'); setFixedAmount('400'); setFixedTerm('4 semanas')
+    setScheme('fijo'); setFixedAmount('400'); setFixedTerm(t('ac.termDefault'))
     setPayAmount('150'); setPayCount('4')
     setMilestones([
-      { id: nid(), name: 'Anticipo', amount: '', when: 'Al firmar el acuerdo' },
-      { id: nid(), name: 'Entrega final', amount: '', when: 'Contra entrega del servicio' },
+      { id: nid(), name: t('ac.d.upfront'), amount: '', when: t('ac.d.onSigning') },
+      { id: nid(), name: t('ac.d.final'), amount: '', when: t('ac.d.onDelivery') },
     ])
     setOpenDocId(null)
     setDocName('')
@@ -153,13 +156,18 @@ export default function AcuerdoPage() {
     const per = parseNum(payAmount)
     const total = scheme === 'fijo' ? parseNum(fixedAmount) : per * n
 
-    const periodName = scheme === 'mensual' ? 'mes' : 'quincena'
+    const periodName = scheme === 'mensual' ? t('ac.month') : t('ac.fortnight')
     const schemeLabel =
       scheme === 'fijo'
-        ? `Monto fijo por el servicio completo${fixedTerm.trim() ? ` — plazo estimado: ${fixedTerm.trim()}` : ''}`
-        : `Pago ${scheme} durante ${n || '—'} ${n === 1 ? periodName : scheme === 'mensual' ? 'meses' : 'quincenas'}`
+        ? t('ac.labelFijo', {
+            term: fixedTerm.trim() ? t('ac.labelTerm', { t: fixedTerm.trim() }) : '',
+          })
+        : t(scheme === 'mensual' ? 'ac.labelMensual' : 'ac.labelQuincenal', {
+            n: n || '—',
+            period: n === 1 ? periodName : scheme === 'mensual' ? t('ac.months') : t('ac.fortnights'),
+          })
     const perPaymentLabel =
-      scheme === 'fijo' ? '' : `$ ${fmt(per)} por ${periodName} × ${n || 0} pagos`
+      scheme === 'fijo' ? '' : t('ac.perLabel', { per: fmt(per), period: periodName, n: n || 0 })
 
     const filledMilestones = milestones
       .filter((m) => m.name.trim() || parseNum(m.amount) > 0)
@@ -170,10 +178,11 @@ export default function AcuerdoPage() {
       total <= 0 || filledMilestones.length === 0 ? null : Math.abs(diff) < 0.005
 
     return { n, per, total, schemeLabel, perPaymentLabel, filledMilestones, assigned, diff, health }
-  }, [scheme, fixedAmount, fixedTerm, payAmount, payCount, milestones])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheme, fixedAmount, fixedTerm, payAmount, payCount, milestones, lang])
 
   const filledItems = items.map((i) => i.text.trim()).filter(Boolean)
-  const today = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
+  const today = new Date().toLocaleDateString(dateLocale(lang), { day: '2-digit', month: 'long', year: 'numeric' })
 
   const openTicket = () => {
     posthog.capture('service_ticket_generated', { item_count: filledItems.length, milestone_count: calc.filledMilestones.length })
@@ -221,13 +230,13 @@ export default function AcuerdoPage() {
           onDuplicate={duplicate}
           onDelete={handleDelete}
           onNew={handleNew}
-          saveLabel="Guardar acuerdo"
-          listLabel="Acuerdos guardados"
-          placeholder="Ej. Acuerdo — diseño de marca para Café Andino"
+          saveLabel={t('ac.saveLabel')}
+          listLabel={t('ac.listLabel')}
+          placeholder={t('ac.placeholder')}
         />
         {docName && openDocId && (
           <p className="mt-2 font-mono text-[11px] text-inkmuted">
-            Editando: <span className="font-semibold text-inksoft">{docName}</span> — los cambios no se guardan solos; pulsa «Guardar cambios».
+            {t('docs.editing')} <span className="font-semibold text-inksoft">{docName}</span> {t('docs.unsaved')}
           </p>
         )}
       </div>
@@ -236,48 +245,48 @@ export default function AcuerdoPage() {
         {/* ————— LEFT: formulario ————— */}
         <div className="min-w-0">
           {/* 01 — partes */}
-          <Step n="01" icon={<IconUsers />} title="Las partes" color={ACCENT}>
+          <Step n="01" icon={<IconUsers />} title={t('ac.parties')} color={ACCENT}>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label className="field-label">
-                  Contratante (tú)
+                  {t('ac.client')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={client} onChange={setClient} placeholder="Ej. Alejandro Danieles" />
+                  <TextInput value={client} onChange={setClient} placeholder={t('ac.clientPh')} />
                 </div>
                 <label className="field-label mt-4 !text-[10px]">
-                  Cédula / ID fiscal (opcional)
+                  {t('ac.idNum')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={clientId} onChange={setClientId} placeholder="Ej. V-12.345.678" />
+                  <TextInput value={clientId} onChange={setClientId} placeholder={t('ac.clientIdPh')} />
                 </div>
               </div>
               <div>
                 <label className="field-label">
-                  Prestador del servicio
+                  {t('ac.provider')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={provider} onChange={setProvider} placeholder="Ej. María Pérez — Diseño" />
+                  <TextInput value={provider} onChange={setProvider} placeholder={t('ac.providerPh')} />
                 </div>
                 <label className="field-label mt-4 !text-[10px]">
-                  Cédula / ID fiscal (opcional)
+                  {t('ac.idNum')}
                 </label>
                 <div className="mt-1.5">
-                  <TextInput value={providerId} onChange={setProviderId} placeholder="Ej. V-98.765.432" />
+                  <TextInput value={providerId} onChange={setProviderId} placeholder={t('ac.providerIdPh')} />
                 </div>
               </div>
             </div>
             <p className="mt-4 font-mono text-[11px] text-inkmuted">
-              Fecha del acuerdo: {today}
+              {t('ac.date', { d: today })}
             </p>
           </Step>
 
           {/* 02 — ítems */}
-          <Step n="02" icon={<IconList />} title="Ítems del servicio" color={ACCENT}
+          <Step n="02" icon={<IconList />} title={t('ac.items')} color={ACCENT}
             right={
               <HealthPill
                 ok={filledItems.length > 0 ? true : null}
-                okText={`${filledItems.length} ítem${filledItems.length === 1 ? '' : 's'} definido${filledItems.length === 1 ? '' : 's'}`}
+                okText={`${filledItems.length} ${filledItems.length === 1 ? t('ac.itemOne') : t('ac.itemMany')}`}
                 badText=""
               />
             }
@@ -292,14 +301,14 @@ export default function AcuerdoPage() {
                     <TextInput
                       value={item.text}
                       onChange={(v) => setItem(item.id, v)}
-                      placeholder="Ej. Diseño de 5 piezas gráficas para redes sociales"
+                      placeholder={t('ac.itemPh')}
                     />
                   </div>
                   {items.length > 1 && (
                     <button
                       onClick={() => setItems((prev) => prev.filter((x) => x.id !== item.id))}
                       className="shrink-0 text-inkmuted transition-colors hover:text-ink"
-                      aria-label="Quitar ítem"
+                      aria-label={t('ac.delItem')}
                     >
                       ✕
                     </button>
@@ -311,16 +320,15 @@ export default function AcuerdoPage() {
               onClick={() => setItems((prev) => [...prev, { id: nid(), text: '' }])}
               className="mt-5 rounded-full border border-dashed border-inkmuted px-5 py-2 text-sm font-medium text-inksoft transition-colors hover:border-ink hover:text-ink"
             >
-              + Agregar ítem
+              {t('ac.addItem')}
             </button>
             <p className="mt-4 font-mono text-[11px] leading-relaxed text-inkmuted">
-              Describe cada entregable con la mayor claridad posible: qué incluye, en qué formato y cuántas
-              revisiones contempla.
+              {t('ac.itemsNote')}
             </p>
           </Step>
 
           {/* 03 — esquema de pago */}
-          <Step n="03" icon={<IconWallet />} title="Esquema de pago" color={ACCENT}>
+          <Step n="03" icon={<IconWallet />} title={t('ac.scheme')} color={ACCENT}>
             <div className="grid gap-3 sm:grid-cols-3">
               {SCHEMES.map((s) => {
                 const active = scheme === s.id
@@ -334,9 +342,9 @@ export default function AcuerdoPage() {
                         : 'border-line bg-paper hover:border-inkmuted'
                     }`}
                   >
-                    <p className="font-grotesk text-sm font-bold">{s.name}</p>
+                    <p className="font-grotesk text-sm font-bold">{t(s.nameKey)}</p>
                     <p className={`mt-1 text-xs leading-relaxed ${active ? 'text-white/60' : 'text-inkmuted'}`}>
-                      {s.hint}
+                      {t(s.hintKey)}
                     </p>
                   </button>
                 )
@@ -348,16 +356,16 @@ export default function AcuerdoPage() {
                 <>
                   <div>
                     <label className="field-label">
-                      Monto total ($)
+                      {t('ac.total')}
                     </label>
                     <NumInput value={fixedAmount} onChange={setFixedAmount} />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="field-label">
-                      Plazo estimado del servicio
+                      {t('ac.term')}
                     </label>
                     <div className="mt-1.5">
-                      <TextInput value={fixedTerm} onChange={setFixedTerm} placeholder="Ej. 4 semanas" />
+                      <TextInput value={fixedTerm} onChange={setFixedTerm} placeholder={t('ac.termPh')} />
                     </div>
                   </div>
                 </>
@@ -365,19 +373,19 @@ export default function AcuerdoPage() {
                 <>
                   <div>
                     <label className="field-label">
-                      Monto por pago ($)
+                      {t('ac.perPayment')}
                     </label>
                     <NumInput value={payAmount} onChange={setPayAmount} />
                   </div>
                   <div>
                     <label className="field-label">
-                      N° de pagos
+                      {t('ac.payCount')}
                     </label>
                     <NumInput value={payCount} onChange={setPayCount} />
                   </div>
                   <div className="flex items-end pb-1.5">
                     <p className="font-mono text-[11px] leading-relaxed text-inkmuted">
-                      {calc.perPaymentLabel || 'Completa el monto y la cantidad de pagos'}
+                      {calc.perPaymentLabel || t('ac.fillPayment')}
                     </p>
                   </div>
                 </>
@@ -386,15 +394,15 @@ export default function AcuerdoPage() {
           </Step>
 
           {/* 04 — hitos */}
-          <Step n="04" icon={<IconFlag />} title="Hitos de pago" color={ACCENT}
+          <Step n="04" icon={<IconFlag />} title={t('ac.milestones')} color={ACCENT}
             right={
               <HealthPill
                 ok={calc.health}
-                okText="Los hitos cuadran con el total"
+                okText={t('ac.healthOk')}
                 badText={
                   calc.diff > 0
-                    ? `Faltan $${fmt(calc.diff)} por asignar`
-                    : `Excede el total por $${fmt(-calc.diff)}`
+                    ? t('ac.healthUnder', { v: fmt(calc.diff) })
+                    : t('ac.healthOver', { v: fmt(-calc.diff) })
                 }
               />
             }
@@ -410,14 +418,14 @@ export default function AcuerdoPage() {
                       <TextInput
                         value={m.name}
                         onChange={(v) => setMilestone(m.id, { name: v })}
-                        placeholder="Nombre del hito — ej. Primer avance"
+                        placeholder={t('ac.msPh')}
                       />
                     </div>
                     {milestones.length > 1 && (
                       <button
                         onClick={() => setMilestones((prev) => prev.filter((x) => x.id !== m.id))}
                         className="shrink-0 text-inkmuted transition-colors hover:text-ink"
-                        aria-label="Quitar hito"
+                        aria-label={t('ac.delMs')}
                       >
                         ✕
                       </button>
@@ -426,19 +434,19 @@ export default function AcuerdoPage() {
                   <div className="mt-3 grid gap-4 pl-10 sm:grid-cols-[140px_1fr]">
                     <div>
                       <label className="field-label !text-[10px]">
-                        Monto ($)
+                        {t('ac.msAmount')}
                       </label>
                       <NumInput value={m.amount} onChange={(v) => setMilestone(m.id, { amount: v })} />
                     </div>
                     <div>
                       <label className="field-label !text-[10px]">
-                        Condición o fecha
+                        {t('ac.msWhen')}
                       </label>
                       <div className="mt-1">
                         <TextInput
                           value={m.when}
                           onChange={(v) => setMilestone(m.id, { when: v })}
-                          placeholder="Ej. Al aprobar el primer avance"
+                          placeholder={t('ac.msWhenPh')}
                         />
                       </div>
                     </div>
@@ -450,11 +458,10 @@ export default function AcuerdoPage() {
               onClick={() => setMilestones((prev) => [...prev, { id: nid(), name: '', amount: '', when: '' }])}
               className="mt-5 rounded-full border border-dashed border-inkmuted px-5 py-2 text-sm font-medium text-inksoft transition-colors hover:border-ink hover:text-ink"
             >
-              + Agregar hito
+              {t('ac.addMs')}
             </button>
             <p className="mt-4 font-mono text-[11px] leading-relaxed text-inkmuted">
-              Reparte el total entre los hitos — la píldora te avisa cuando la suma cuadra con el monto
-              acordado.
+              {t('ac.msNote')}
             </p>
           </Step>
         </div>
@@ -463,13 +470,13 @@ export default function AcuerdoPage() {
         <aside className="border-t border-line lg:border-l lg:border-t-0">
           <div className="sticky top-14 px-5 py-10 md:px-8">
             <p className="field-label !mb-4">
-              Vista previa del documento
+              {t('ac.preview')}
             </p>
 
             <div className="mt-4 rounded-2xl border border-line bg-paper p-6 shadow-sm">
               <div className="border-b-2 pb-4" style={{ borderColor: ACCENT }}>
                 <p className="font-grotesk text-base font-bold leading-tight">
-                  ACUERDO DE PRESTACIÓN DE SERVICIOS
+                  {t('ac.docTitle')}
                 </p>
                 <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-inkmuted">
                   {today} · AD·Tools
@@ -477,18 +484,17 @@ export default function AcuerdoPage() {
               </div>
 
               <p className="mt-4 text-[13px] leading-relaxed text-inksoft">
-                Entre <strong className="text-ink">{client.trim() || 'el Contratante'}</strong>
-                {clientId.trim() ? ` (${clientId.trim()})` : ''} (en adelante, el
-                Cliente) y <strong style={{ color: ACCENT }}>{provider.trim() || 'el Prestador'}</strong>
-                {providerId.trim() ? ` (${providerId.trim()})` : ''} (en
-                adelante, el Prestador), se acuerda lo siguiente:
+                {t('ac.between')} <strong className="text-ink">{client.trim() || t('ac.theClient')}</strong>
+                {clientId.trim() ? ` (${clientId.trim()})` : ''} {t('ac.hereClient')}{' '}
+                <strong style={{ color: ACCENT }}>{provider.trim() || t('ac.theProvider')}</strong>
+                {providerId.trim() ? ` (${providerId.trim()})` : ''} {t('ac.hereProvider')}
               </p>
 
               <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: ACCENT }}>
-                1 · Objeto del servicio
+                {t('ac.s1')}
               </p>
               {filledItems.length === 0 ? (
-                <p className="mt-2 text-[13px] italic text-inkmuted">Aún sin ítems definidos…</p>
+                <p className="mt-2 text-[13px] italic text-inkmuted">{t('ac.noItems')}</p>
               ) : (
                 <ol className="mt-2 space-y-1.5">
                   {filledItems.map((it, i) => (
@@ -503,7 +509,7 @@ export default function AcuerdoPage() {
               )}
 
               <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: ACCENT }}>
-                2 · Esquema de pago
+                {t('ac.s2')}
               </p>
               <p className="mt-2 text-[13px] leading-relaxed text-ink">{calc.schemeLabel}.</p>
               {calc.perPaymentLabel && (
@@ -511,23 +517,23 @@ export default function AcuerdoPage() {
               )}
               <p className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
                 <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-inkmuted">
-                  Total acordado
+                  {t('ac.agreedTotal')}
                 </span>
                 <span className="font-mono text-xl font-bold tabular-nums">$ {fmt(calc.total)}</span>
               </p>
 
               <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: ACCENT }}>
-                3 · Hitos de pago
+                {t('ac.s3')}
               </p>
               {calc.filledMilestones.length === 0 ? (
-                <p className="mt-2 text-[13px] italic text-inkmuted">Pago único contra entrega…</p>
+                <p className="mt-2 text-[13px] italic text-inkmuted">{t('ac.singlePayment')}</p>
               ) : (
                 <div className="mt-2">
                   {calc.filledMilestones.map((m, i) => (
                     <div key={i} className="flex items-baseline justify-between gap-3 border-b border-line py-2">
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-ink">
-                          {String(i + 1).padStart(2, '0')} · {m.name || `Hito ${i + 1}`}
+                          {String(i + 1).padStart(2, '0')} · {m.name || t('ac.milestoneN', { n: i + 1 })}
                         </p>
                         {m.when && <p className="font-mono text-[10px] text-inkmuted">{m.when}</p>}
                       </div>
@@ -541,8 +547,8 @@ export default function AcuerdoPage() {
 
               <div className="mt-8 grid grid-cols-2 gap-6">
                 {[
-                  ['EL CLIENTE', client.trim(), clientId.trim()],
-                  ['EL PRESTADOR', provider.trim(), providerId.trim()],
+                  [t('ac.roleClient'), client.trim(), clientId.trim()],
+                  [t('ac.roleProvider'), provider.trim(), providerId.trim()],
                 ].map(([role, name, idNum]) => (
                   <div key={role}>
                     <div className="h-10 border-b border-ink" />
@@ -562,7 +568,7 @@ export default function AcuerdoPage() {
                 style={{ backgroundColor: ACCENT }}
               >
                 <IconDoc className="h-4 w-4" />
-                Descargar documento
+                {t('ac.download')}
               </button>
               <button
                 onClick={openTicket}
@@ -570,12 +576,11 @@ export default function AcuerdoPage() {
                 className="flex flex-1 items-center justify-center gap-2 rounded-full border py-3.5 font-grotesk text-sm font-bold transition-colors hover:bg-[color-mix(in_srgb,var(--facc)_6%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ borderColor: ACCENT, color: ACCENT }}
               >
-                Ticket de servicio
+                {t('ac.ticket')}
               </button>
             </div>
             <p className="mt-3 text-center font-mono text-[10px] leading-relaxed text-inkmuted">
-              El documento es el acuerdo completo para firmar; el ticket es un resumen rápido para enviar. No
-              sustituyen un contrato con validez legal — para eso, consulta a un profesional.
+              {t('ac.legalNote')}
             </p>
           </div>
         </aside>

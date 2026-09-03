@@ -175,6 +175,14 @@ const STRINGS: Record<string, { es: string; en: string }> = {
     es: ' El IGTF (3%) aplica a pagos en moneda extranjera y se calcula sobre el total de la factura.',
     en: ' The IGTF (3%) applies to foreign currency payments and is calculated on the invoice total.',
   },
+  'iva.amountCurrency': { es: 'Moneda del monto', en: 'Amount currency' },
+  'iva.amountsCharge': { es: 'Montos que cobras ($)', en: 'Amounts you charge ($)' },
+  'iva.addItem': { es: '+ Añadir otro monto', en: '+ Add another amount' },
+  'iva.itemPh': { es: 'Descripción (opcional)', en: 'Description (optional)' },
+  'iva.removeItem': { es: 'Quitar monto', en: 'Remove amount' },
+  'iva.itemsTotal': { es: 'Suma de montos', en: 'Amounts total' },
+  'iva.rateTag': { es: 'tasa {r}', en: 'rate {r}' },
+  'iva.copyEquiv': { es: 'Equivalente: {v} (tasa {r})', en: 'Equivalent: {v} (rate {r})' },
   'iva.serviceName': { es: 'Nombre del servicio', en: 'Service name' },
   'iva.servicePh': {
     es: 'Ej. Diseño de logo + manual de marca',
@@ -212,18 +220,18 @@ const STRINGS: Record<string, { es: string; en: string }> = {
   'tasas.bolivares': { es: 'Bolívares', en: 'Bolívares' },
   'tasas.srcBcv': { es: 'Banco Central de Venezuela', en: 'Central Bank of Venezuela' },
   'tasas.srcPar': { es: 'Mercado paralelo', en: 'Parallel market' },
-  'tasas.srcUsdt': { es: 'P2P / estimado', en: 'P2P / estimated' },
+  'tasas.srcUsdt': { es: 'Estimado ≈ paralelo', en: 'Estimated ≈ parallel' },
   'tasas.deltaTitle': {
-    es: 'Variación vs. consulta anterior',
-    en: 'Change vs. your previous check',
+    es: 'Variación vs. día anterior',
+    en: 'Change vs. previous day',
   },
   'tasas.reset': { es: 'Restablecer tasas originales', en: 'Reset to live rates' },
   'tasas.amount': { es: 'Monto a convertir', en: 'Amount to convert' },
   'tasas.from': { es: 'Moneda de origen', en: 'Source currency' },
   'tasas.to': { es: 'Equivale a', en: 'Converts to' },
   'tasas.disclaimer': {
-    es: '* Tasas oficiales del BCV vía API pública (dolarapi.com). La tasa USDT es una estimación basada en el mercado — verifica el precio real en tu exchange P2P antes de cerrar una operación. Las flechas ▲▼ comparan contra tu consulta anterior guardada en este navegador.',
-    en: '* Official BCV rates via public API (dolarapi.com). The USDT rate is a market-based estimate — check the real price on your P2P exchange before closing a deal. The ▲▼ arrows compare against your previous check saved in this browser.',
+    es: '* Tasas oficiales del BCV vía API pública (dolarapi.com). La tasa USDT se estima con el mercado paralelo — verifica el precio real en tu exchange P2P antes de cerrar una operación. Las flechas ▲▼ comparan contra el último día anterior consultado desde este navegador.',
+    en: '* Official BCV rates via public API (dolarapi.com). The USDT rate is estimated from the parallel market — check the real price on your P2P exchange before closing a deal. The ▲▼ arrows compare against the last previous day checked from this browser.',
   },
 
   /* ——— Imágenes ——— */
@@ -522,6 +530,11 @@ const STRINGS: Record<string, { es: string; en: string }> = {
   'sv.d.f6': { es: 'Entrega prioritaria', en: 'Priority delivery' },
   'sv.d.f7': { es: 'Revisiones ilimitadas', en: 'Unlimited revisions' },
   'sv.d.f8': { es: 'Soporte 30 días', en: '30-day support' },
+  'sv.m.horas.short': { es: 'Por horas', en: 'Hourly' },
+  'sv.m.paquete.short': { es: 'Paquetes', en: 'Packages' },
+  'sv.m.valor.short': { es: 'Por valor', en: 'By value' },
+  'sv.m.retainer.short': { es: 'Retainer', en: 'Retainer' },
+  'sv.effPill': { es: '${v}/h efectivo', en: '${v}/h effective' },
 
   /* ——— Acuerdo ——— */
   'ac.saveLabel': { es: 'Guardar acuerdo', en: 'Save agreement' },
@@ -642,6 +655,12 @@ const STRINGS: Record<string, { es: string; en: string }> = {
     es: '$ {per} por {period} × {n} pagos',
     en: '$ {per} per {period} × {n} payments',
   },
+  'ac.between': { es: 'Entre', en: 'Between' },
+  'ac.hereClient': { es: '(en adelante, el Cliente) y', en: '(hereinafter, the Client) and' },
+  'ac.hereProvider': {
+    es: '(en adelante, el Prestador), se acuerda lo siguiente:',
+    en: '(hereinafter, the Provider), the following is agreed:',
+  },
 
   /* ——— Texto para Redes ——— */
   'tx.yourCopy': { es: 'Tu copy', en: 'Your copy' },
@@ -723,6 +742,7 @@ const STRINGS: Record<string, { es: string; en: string }> = {
   'quote.service': { es: 'SERVICIO', en: 'SERVICE' },
   'quote.defaultService': { es: 'Servicio profesional', en: 'Professional service' },
   'quote.amount': { es: 'MONTO ACORDADO', en: 'AGREED AMOUNT' },
+  'quote.itemN': { es: 'Monto {n}', en: 'Amount {n}' },
   'quote.usdNote': {
     es: 'Montos expresados en dólares (USD)',
     en: 'Amounts expressed in US dollars (USD)',

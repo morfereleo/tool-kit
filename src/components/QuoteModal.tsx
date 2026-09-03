@@ -14,6 +14,8 @@ export type QuoteData = {
   totalBs: number
   taxName: string
   taxRate: number
+  /** Desglose de montos cuando la orden agrupa varios cobros */
+  items?: { name: string; amount: number }[]
 }
 
 const INK = '#1C1917'
@@ -23,7 +25,9 @@ const ACCENT = '#2F4BFF'
 
 const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) => {
   const W = 760
-  const H = 820
+  const items = d.items ?? []
+  const itemsH = items.length > 1 ? items.length * 28 + 26 : 0
+  const H = 820 + itemsH
   canvas.width = W * 2
   canvas.height = H * 2
   const ctx = canvas.getContext('2d')!
@@ -87,19 +91,45 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) =
   ctx.fillText(line.trim(), 48, y)
   const serviceBottom = y + 40
 
-  // amounts in USD
   ctx.strokeStyle = LINE
   ctx.beginPath()
   ctx.moveTo(48, serviceBottom)
   ctx.lineTo(W - 48, serviceBottom)
   ctx.stroke()
 
+  // itemized amounts (when the order groups several charges)
+  let amountsTop = serviceBottom
+  if (items.length > 1) {
+    items.forEach((it, i) => {
+      const ry = serviceBottom + 32 + i * 28
+      ctx.font = `500 14px ${sans}`
+      ctx.fillStyle = MUTED
+      let name = it.name || t('quote.itemN', { n: i + 1 })
+      while (ctx.measureText(name).width > W - 280 && name.length > 1) {
+        name = name.slice(0, -2) + '…'
+      }
+      ctx.fillText(name, 48, ry)
+      ctx.textAlign = 'right'
+      ctx.font = `600 14px ${mono}`
+      ctx.fillStyle = INK
+      ctx.fillText(`$ ${fmt(it.amount)}`, W - 48, ry)
+      ctx.textAlign = 'left'
+    })
+    amountsTop = serviceBottom + itemsH
+    ctx.strokeStyle = LINE
+    ctx.beginPath()
+    ctx.moveTo(48, amountsTop)
+    ctx.lineTo(W - 48, amountsTop)
+    ctx.stroke()
+  }
+
+  // amounts in USD
   ctx.font = `500 11px ${mono}`
   ctx.fillStyle = MUTED
-  ctx.fillText(t('quote.amount'), 48, serviceBottom + 36)
+  ctx.fillText(t('quote.amount'), 48, amountsTop + 36)
   ctx.font = `600 40px ${mono}`
   ctx.fillStyle = INK
-  ctx.fillText(`$ ${fmt(d.amountUSD)}`, 48, serviceBottom + 80)
+  ctx.fillText(`$ ${fmt(d.amountUSD)}`, 48, amountsTop + 80)
 
   const usd = d.rateBs <= 1
   const cur = usd ? '$' : 'Bs.'
@@ -108,11 +138,11 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) =
   ctx.fillStyle = MUTED
   ctx.fillText(
     usd ? t('quote.usdNote') : t('quote.fxNote', { r: fmt(d.rateBs) }),
-    48, serviceBottom + 112,
+    48, amountsTop + 112,
   )
 
   // breakdown box
-  const boxY = serviceBottom + 140
+  const boxY = amountsTop + 140
   ctx.fillStyle = '#FFFFFF'
   ctx.strokeStyle = LINE
   ctx.beginPath()
