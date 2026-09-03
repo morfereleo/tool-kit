@@ -11,7 +11,7 @@ import { useVeRates } from '@/hooks/useVeRates'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
 
-const tool = TOOLS.find((t) => t.path === '#/iva')!
+const tool = TOOLS.find((t) => t.path === '/iva')!
 const ACCENT = tool.accent
 const ACCENT_SOFT = '#9FB2FF'
 

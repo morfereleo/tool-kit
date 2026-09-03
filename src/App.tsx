@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Header, Footer } from '@/components/Layout'
-import { useHashRoute } from '@/hooks/useHashRoute'
+import { useRoute } from '@/hooks/useRoute'
 import Home from '@/pages/Home'
 
 // Cada herramienta se carga bajo demanda: la home no paga el peso de las 7.
@@ -21,29 +21,29 @@ function PageLoader() {
 }
 
 function App() {
-  const route = useHashRoute()
+  const route = useRoute()
 
   let page: React.ReactNode
   switch (route) {
-    case '#/iva':
+    case '/iva':
       page = <IvaPage />
       break
-    case '#/tasas':
+    case '/tasas':
       page = <TasasPage />
       break
-    case '#/imagenes':
+    case '/imagenes':
       page = <ImagenesPage />
       break
-    case '#/qr':
+    case '/qr':
       page = <QrPage />
       break
-    case '#/servicios':
+    case '/servicios':
       page = <ServiciosPage />
       break
-    case '#/acuerdo':
+    case '/acuerdo':
       page = <AcuerdoPage />
       break
-    case '#/texto':
+    case '/texto':
       page = <TextoPage />
       break
     default:

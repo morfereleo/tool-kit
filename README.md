@@ -32,7 +32,7 @@ npm run test     # tests (Vitest)
 npm run build    # producción → dist/
 ```
 
-La app usa hash routing (`#/iva`, `#/tasas`…), así que el build estático funciona en cualquier hosting (GitHub Pages, Netlify, Vercel) sin configuración adicional.
+La app usa rutas reales (`/iva`, `/tasas`…) con la History API; el hosting necesita fallback SPA a `index.html` (ya configurado para Vercel en `vercel.json`). Los enlaces antiguos con hash (`#/iva`) se redirigen automáticamente.
 
 ---
 

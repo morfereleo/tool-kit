@@ -46,7 +46,7 @@ export default function BrandShell({
         </span>
         <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 md:px-8 md:pt-16">
           <a
-            href="#/"
+            href="/"
             className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-inkmuted transition-colors hover:text-ink"
           >
             {t('shell.back')}
