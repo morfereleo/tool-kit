@@ -1,13 +1,24 @@
+import { lazy, Suspense } from 'react'
 import { Header, Footer } from '@/components/Layout'
 import { useHashRoute } from '@/hooks/useHashRoute'
 import Home from '@/pages/Home'
-import IvaPage from '@/pages/IvaPage'
-import TasasPage from '@/pages/TasasPage'
-import ImagenesPage from '@/pages/ImagenesPage'
-import QrPage from '@/pages/QrPage'
-import ServiciosPage from '@/pages/ServiciosPage'
-import AcuerdoPage from '@/pages/AcuerdoPage'
-import TextoPage from '@/pages/TextoPage'
+
+// Cada herramienta se carga bajo demanda: la home no paga el peso de las 7.
+const IvaPage = lazy(() => import('@/pages/IvaPage'))
+const TasasPage = lazy(() => import('@/pages/TasasPage'))
+const ImagenesPage = lazy(() => import('@/pages/ImagenesPage'))
+const QrPage = lazy(() => import('@/pages/QrPage'))
+const ServiciosPage = lazy(() => import('@/pages/ServiciosPage'))
+const AcuerdoPage = lazy(() => import('@/pages/AcuerdoPage'))
+const TextoPage = lazy(() => import('@/pages/TextoPage'))
+
+function PageLoader() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-inkmuted" />
+    </div>
+  )
+}
 
 function App() {
   const route = useHashRoute()
@@ -42,7 +53,9 @@ function App() {
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip">
       <Header current={route} />
-      <div className="flex-1">{page}</div>
+      <div className="flex-1">
+        <Suspense fallback={<PageLoader />}>{page}</Suspense>
+      </div>
       <Footer />
     </div>
   )

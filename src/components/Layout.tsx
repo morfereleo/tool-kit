@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import { BRAND, TOOLS, toolText } from '@/lib/tools'
 import { useLang, useT } from '@/lib/i18n'
@@ -99,18 +99,43 @@ export function Header({ current }: { current: string }) {
   const [open, setOpen] = useState(false)
   const { lang } = useLang()
   const t = useT()
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuCloseRef = useRef<HTMLButtonElement>(null)
+  const burgerRef = useRef<HTMLButtonElement>(null)
 
-  // Bloquea el scroll de la página y permite cerrar con Escape mientras el menú está abierto
+  // Bloquea el scroll, cierra con Escape, atrapa el Tab dentro del menú
+  // y devuelve el foco al botón hamburguesa al cerrar
   useEffect(() => {
     if (!open) return
+    const burger = burgerRef.current
     document.body.style.overflow = 'hidden'
+    menuCloseRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Tab') {
+        const menu = menuRef.current
+        if (!menu) return
+        const items = Array.from(
+          menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+        )
+        if (!items.length) return
+        const first = items[0]
+        const last = items[items.length - 1]
+        const active = document.activeElement
+        if (e.shiftKey && (active === first || !menu.contains(active))) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && (active === last || !menu.contains(active))) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = ''
       window.removeEventListener('keydown', onKey)
+      burger?.focus()
     }
   }, [open])
 
@@ -144,9 +169,12 @@ export function Header({ current }: { current: string }) {
           <LangToggle />
           <ThemeToggle />
           <button
+            ref={burgerRef}
             onClick={() => setOpen(!open)}
             className="flex h-9 w-9 items-center justify-center md:hidden"
             aria-label={t('ui.menu')}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
           >
           <div className="space-y-1.5">
             <span className={`block h-0.5 w-5 bg-ink transition-transform ${open ? 'translate-y-2 rotate-45' : ''}`} />
@@ -160,6 +188,11 @@ export function Header({ current }: { current: string }) {
       {open &&
         createPortal(
           <div
+            ref={menuRef}
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('ui.menu')}
             className="fixed inset-0 z-[999] flex flex-col overflow-hidden md:hidden"
           style={{
             animation: 'menu-fade 0.25s ease-out both',
@@ -184,6 +217,7 @@ export function Header({ current }: { current: string }) {
               <span className="font-grotesk text-lg font-bold tracking-tight text-[#F3EBDC]">Tool Kit</span>
             </span>
             <button
+              ref={menuCloseRef}
               onClick={() => setOpen(false)}
               className="flex h-9 w-9 items-center justify-center text-[#F3EBDC]"
               aria-label={t('ui.closeMenu')}

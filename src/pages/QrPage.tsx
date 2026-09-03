@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import BrandShell from '@/components/BrandShell'
 import { TOOLS } from '@/lib/tools'
+import { useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
 
 const tool = TOOLS[3]
@@ -14,12 +15,12 @@ const SIZES = [256, 512, 1024]
 
 /* ————— Plantillas (pares código/fondo listos para usar) ————— */
 const TEMPLATES: { name: string; fg: string; bg: string }[] = [
-  { name: 'Clásico', fg: '#1C1917', bg: '#FFFFFF' },
-  { name: 'Sepia', fg: '#292119', bg: '#F7F2E9' },
-  { name: 'Cobalto', fg: '#2F4BFF', bg: '#FFFFFF' },
-  { name: 'Bosque', fg: '#0B6B4F', bg: '#F2FBF6' },
-  { name: 'Violeta', fg: '#6D28D9', bg: '#FBF7FF' },
-  { name: 'Naranja', fg: '#EA4A0F', bg: '#FFF7E6' },
+  { name: 'qr.t1', fg: '#1C1917', bg: '#FFFFFF' },
+  { name: 'qr.t2', fg: '#292119', bg: '#F7F2E9' },
+  { name: 'qr.t3', fg: '#2F4BFF', bg: '#FFFFFF' },
+  { name: 'qr.t4', fg: '#0B6B4F', bg: '#F2FBF6' },
+  { name: 'qr.t5', fg: '#6D28D9', bg: '#FBF7FF' },
+  { name: 'qr.t6', fg: '#EA4A0F', bg: '#FFF7E6' },
 ]
 
 /* ————— Contraste código/fondo (luminancia relativa WCAG) ————— */
@@ -44,6 +45,8 @@ const contrastRatio = (a: string, b: string): number => {
 }
 
 export default function QrPage() {
+  const { lang } = useLang()
+  const t = useT()
   const [text, setText] = useState('https://alejandrodanieles.com')
   const [fg, setFg] = useState('#1C1917')
   const [bg, setBg] = useState('#FFFFFF')
@@ -57,7 +60,7 @@ export default function QrPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const contrast = contrastRatio(fg, bg)
-  const activeTemplate = TEMPLATES.find((t) => t.fg === fg && t.bg === bg)
+  const activeTemplate = TEMPLATES.find((tpl) => tpl.fg === fg && tpl.bg === bg)
 
   /* Caja blanca + logo en el centro (canvas ya renderizado) */
   const drawLogo = (canvas: HTMLCanvasElement, img: HTMLImageElement) => {
@@ -110,9 +113,9 @@ export default function QrPage() {
         setError('')
         if (logo) drawLogo(canvas, logo)
       })
-      .catch(() => setError('El contenido es demasiado largo para un solo QR.'))
+      .catch(() => setError(t('qr.tooLong')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, fg, bg, size, logo])
+  }, [text, fg, bg, size, logo, lang])
 
   const downloadPng = () => {
     const canvas = canvasRef.current
@@ -172,29 +175,30 @@ export default function QrPage() {
     <BrandShell tool={tool}>
       <section className="mx-auto grid max-w-6xl md:grid-cols-2">
         <div className="border-b border-line px-5 py-10 md:border-b-0 md:border-r md:px-8 md:py-14">
-          <label className="field-label">Contenido del QR</label>
+          <label htmlFor="qr-content" className="field-label">{t('qr.content')}</label>
           <textarea
+            id="qr-content"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
-            placeholder="URL, texto, WhatsApp, WiFi…"
+            placeholder={t('qr.contentPh')}
             className="field-box resize-none font-mono text-sm"
           />
           <p className="mt-2 font-mono text-[11px] text-inkmuted">
-            Tip: para WhatsApp usa https://wa.me/584121234567
+            {t('qr.waTip')}
           </p>
 
           <div className="mt-8">
-            <label className="field-label">Plantillas</label>
+            <p className="field-label">{t('qr.templates')}</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
-              {TEMPLATES.map((t) => {
-                const active = activeTemplate?.name === t.name
+              {TEMPLATES.map((tpl) => {
+                const active = activeTemplate?.name === tpl.name
                 return (
                   <button
-                    key={t.name}
+                    key={tpl.name}
                     onClick={() => {
-                      setFg(t.fg)
-                      setBg(t.bg)
+                      setFg(tpl.fg)
+                      setBg(tpl.bg)
                     }}
                     className={`rounded-xl border p-2 text-center transition-all hover:-translate-y-0.5 ${
                       active ? 'border-transparent ring-2 ring-ink' : 'border-line hover:border-inkmuted'
@@ -202,17 +206,17 @@ export default function QrPage() {
                   >
                     <span
                       className="flex h-11 items-center justify-center rounded-lg border border-line/60"
-                      style={{ backgroundColor: t.bg }}
+                      style={{ backgroundColor: tpl.bg }}
                     >
                       <span className="grid grid-cols-2 gap-[3px]">
-                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: t.fg }} />
-                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: t.fg }} />
-                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: t.fg }} />
-                        <span className="h-2.5 w-2.5 rounded-[2px] opacity-30" style={{ backgroundColor: t.fg }} />
+                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: tpl.fg }} />
+                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: tpl.fg }} />
+                        <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: tpl.fg }} />
+                        <span className="h-2.5 w-2.5 rounded-[2px] opacity-30" style={{ backgroundColor: tpl.fg }} />
                       </span>
                     </span>
                     <span className="mt-1.5 block font-mono text-[10px] uppercase tracking-wider text-inksoft">
-                      {t.name}
+                      {t(tpl.name)}
                     </span>
                   </button>
                 )
@@ -221,7 +225,7 @@ export default function QrPage() {
           </div>
 
           <div className="mt-8">
-            <label className="field-label">Color del código{!activeTemplate && ' · personalizado'}</label>
+            <p className="field-label">{t('qr.codeColor')}{!activeTemplate && t('qr.custom')}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {SWATCHES.map((c) => (
                 <button
@@ -239,13 +243,14 @@ export default function QrPage() {
                 value={fg}
                 onChange={(e) => setFg(e.target.value)}
                 className="h-9 w-12 cursor-pointer rounded-full border border-line bg-transparent"
-                title="Color libre"
+                title={t('qr.freeColor')}
+                aria-label={t('qr.freeColor')}
               />
             </div>
           </div>
 
           <div className="mt-8">
-            <label className="field-label">Color de fondo</label>
+            <p className="field-label">{t('qr.bgColor')}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {BG_SWATCHES.map((c) => (
                 <button
@@ -263,13 +268,14 @@ export default function QrPage() {
                 value={bg}
                 onChange={(e) => setBg(e.target.value)}
                 className="h-9 w-12 cursor-pointer rounded-full border border-line bg-transparent"
-                title="Color libre"
+                title={t('qr.freeColor')}
+                aria-label={t('qr.freeColor')}
               />
             </div>
           </div>
 
           <div className="mt-8">
-            <label className="field-label">Logo en el centro · opcional</label>
+            <p className="field-label">{t('qr.logo')}</p>
             <div className="mt-3">
               {logo ? (
                 <div className="flex items-center gap-3 rounded-xl border border-line p-2.5">
@@ -283,7 +289,7 @@ export default function QrPage() {
                     onClick={() => fileRef.current?.click()}
                     className="rounded-full border border-line px-3.5 py-1.5 font-mono text-[11px] text-inksoft transition-colors hover:border-ink hover:text-ink"
                   >
-                    Cambiar
+                    {t('qr.change')}
                   </button>
                   <button
                     onClick={() => {
@@ -295,7 +301,7 @@ export default function QrPage() {
                     }}
                     className="rounded-full border border-line px-3.5 py-1.5 font-mono text-[11px] text-inksoft transition-colors hover:border-red-400 hover:text-red-600"
                   >
-                    Quitar
+                    {t('qr.remove')}
                   </button>
                 </div>
               ) : (
@@ -307,7 +313,7 @@ export default function QrPage() {
                     <rect x="3" y="3" width="18" height="18" rx="3" />
                     <path d="M12 8v8M8 12h8" strokeLinecap="round" />
                   </svg>
-                  <span className="text-sm font-medium">Subir tu logo</span>
+                  <span className="text-sm font-medium">{t('qr.uploadLogo')}</span>
                   <span className="font-mono text-[10px] text-inkmuted">PNG · JPG · SVG</span>
                 </button>
               )}
@@ -316,19 +322,19 @@ export default function QrPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                aria-label={t('qr.uploadLogo')}
                 onChange={(e) => onLogoFile(e.target.files?.[0])}
               />
               {logo && (
                 <p className="mt-2 font-mono text-[11px] leading-relaxed text-inkmuted">
-                  * Va sobre una caja blanca con corrección de errores alta — escanéalo
-                  antes de imprimirlo.
+                  {t('qr.logoNote')}
                 </p>
               )}
             </div>
           </div>
 
           <div className="mt-8">
-            <label className="field-label">Tamaño de exportación</label>
+            <p className="field-label">{t('qr.size')}</p>
             <div className="mt-3 flex gap-2">
               {SIZES.map((s) => (
                 <button
@@ -348,7 +354,7 @@ export default function QrPage() {
 
         {/* PREVIEW */}
         <div className="flex flex-col px-5 py-10 md:px-8 md:py-14">
-          <p className="field-label">Vista previa</p>
+          <p className="field-label">{t('qr.preview')}</p>
           <div
             className="mt-4 flex flex-1 items-center justify-center rounded-2xl border border-line p-8"
             style={{
@@ -379,19 +385,11 @@ export default function QrPage() {
                 {contrast >= 4 ? '✓' : '⚠'}
               </span>
               <p className="font-mono text-[11px] leading-relaxed">
-                {contrast >= 4 ? (
-                  <>Contraste óptimo ({contrast.toFixed(1)}:1) — se escaneará sin problema.</>
-                ) : contrast >= 2.5 ? (
-                  <>
-                    Contraste bajo ({contrast.toFixed(1)}:1) — algunos lectores podrían fallar.
-                    Oscurece el código o aclara el fondo para superar 4:1, y escanéalo antes de imprimir.
-                  </>
-                ) : (
-                  <>
-                    Contraste muy bajo ({contrast.toFixed(1)}:1) — es casi seguro que no escanee.
-                    Elige una plantilla o aumenta la diferencia entre código y fondo.
-                  </>
-                )}
+                {contrast >= 4
+                  ? t('qr.contrastGood', { r: contrast.toFixed(1) })
+                  : contrast >= 2.5
+                    ? t('qr.contrastLow', { r: contrast.toFixed(1) })
+                    : t('qr.contrastBad', { r: contrast.toFixed(1) })}
               </p>
             </div>
           )}
@@ -403,20 +401,18 @@ export default function QrPage() {
               className="flex-1 rounded-full py-3.5 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
               style={{ backgroundColor: ACCENT }}
             >
-              Descargar PNG
+              {t('qr.png')}
             </button>
             <button
               onClick={downloadSvg}
               disabled={!text.trim()}
               className="flex-1 rounded-full border border-ink py-3.5 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper disabled:opacity-30"
             >
-              Descargar SVG
+              {t('qr.svg')}
             </button>
           </div>
           <p className="mt-4 font-mono text-[11px] leading-relaxed text-inkmuted">
-            * El SVG es vectorial: ideal para imprenta, tarjetas y vallas sin
-            perder nitidez. Verifica siempre el QR escaneándolo antes de mandarlo
-            a producción.
+            {t('qr.svgNote')}
           </p>
         </div>
       </section>

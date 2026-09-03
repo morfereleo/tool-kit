@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react'
-import JSZip from 'jszip'
 import BrandShell from '@/components/BrandShell'
 import BeforeAfterModal from '@/components/BeforeAfterModal'
 import { TOOLS } from '@/lib/tools'
@@ -117,6 +116,7 @@ export default function ImagenesPage() {
     const done = jobs.filter((j) => j.status === 'done' && j.webpBlob)
     if (!done.length) return
     if (done.length === 1) return downloadOne(done[0])
+    const { default: JSZip } = await import('jszip')
     const zip = new JSZip()
     done.forEach((j) => zip.file(`${j.name}.webp`, j.webpBlob!))
     const blob = await zip.generateAsync({ type: 'blob' })
@@ -151,8 +151,7 @@ export default function ImagenesPage() {
             setDragging(false)
             addFiles(e.dataTransfer.files)
           }}
-          onClick={() => inputRef.current?.click()}
-          className={`group cursor-pointer rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-all md:py-20 ${
+          className={`group rounded-2xl border-2 border-dashed transition-all ${
             dragging ? 'border-transparent' : 'border-line hover:border-inkmuted'
           }`}
           style={dragging ? { backgroundColor: `${ACCENT}12`, borderColor: ACCENT } : undefined}
@@ -163,31 +162,40 @@ export default function ImagenesPage() {
             accept="image/jpeg,image/png"
             multiple
             className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
             onChange={(e) => e.target.files && addFiles(e.target.files)}
           />
-          <div
-            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full transition-transform group-hover:scale-110"
-            style={{ backgroundColor: `${ACCENT}18`, color: ACCENT }}
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="w-full cursor-pointer rounded-2xl px-6 py-14 text-center md:py-20"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
-              <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4 20h16" strokeLinecap="round" />
-            </svg>
-          </div>
-          <p className="mt-5 font-grotesk text-2xl font-bold tracking-tight">
-            {dragging ? t('img.dropping') : t('img.drop')}
-          </p>
-          <p className="mt-2 text-sm text-inksoft">
-            {t('img.dropHint')}
-          </p>
+            <span
+              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full transition-transform group-hover:scale-110"
+              style={{ backgroundColor: `${ACCENT}18`, color: ACCENT }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
+                <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4 20h16" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="mt-5 block font-grotesk text-2xl font-bold tracking-tight">
+              {dragging ? t('img.dropping') : t('img.drop')}
+            </span>
+            <span className="mt-2 block text-sm text-inksoft">
+              {t('img.dropHint')}
+            </span>
+          </button>
         </div>
 
         {/* CONTROLS */}
         {jobs.length > 0 && (
           <div className="mt-10 grid gap-8 md:grid-cols-3">
             <div>
-              <label className="field-label">{t('img.quality', { q: quality })}</label>
+              <label className="field-label" htmlFor="img-quality">{t('img.quality', { q: quality })}</label>
               <input
+                id="img-quality"
                 type="range"
                 min="30"
                 max="100"
@@ -199,8 +207,9 @@ export default function ImagenesPage() {
               <p className="mt-1 font-mono text-[11px] text-inkmuted">{t('img.qualityHint')}</p>
             </div>
             <div>
-              <label className="field-label">{t('img.maxWidth')}</label>
+              <label className="field-label" htmlFor="img-maxwidth">{t('img.maxWidth')}</label>
               <input
+                id="img-maxwidth"
                 type="number"
                 min="0"
                 step="100"

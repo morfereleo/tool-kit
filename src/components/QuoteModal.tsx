@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from '@/components/Modal'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
@@ -14,6 +15,8 @@ export type QuoteData = {
   totalBs: number
   taxName: string
   taxRate: number
+  /** Desglose de montos cuando la orden agrupa varios cobros */
+  items?: { name: string; amount: number }[]
 }
 
 const INK = '#1C1917'
@@ -23,7 +26,9 @@ const ACCENT = '#2F4BFF'
 
 const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) => {
   const W = 760
-  const H = 820
+  const items = d.items ?? []
+  const itemsH = items.length > 1 ? items.length * 28 + 26 : 0
+  const H = 820 + itemsH
   canvas.width = W * 2
   canvas.height = H * 2
   const ctx = canvas.getContext('2d')!
@@ -87,19 +92,45 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) =
   ctx.fillText(line.trim(), 48, y)
   const serviceBottom = y + 40
 
-  // amounts in USD
   ctx.strokeStyle = LINE
   ctx.beginPath()
   ctx.moveTo(48, serviceBottom)
   ctx.lineTo(W - 48, serviceBottom)
   ctx.stroke()
 
+  // itemized amounts (when the order groups several charges)
+  let amountsTop = serviceBottom
+  if (items.length > 1) {
+    items.forEach((it, i) => {
+      const ry = serviceBottom + 32 + i * 28
+      ctx.font = `500 14px ${sans}`
+      ctx.fillStyle = MUTED
+      let name = it.name || t('quote.itemN', { n: i + 1 })
+      while (ctx.measureText(name).width > W - 280 && name.length > 1) {
+        name = name.slice(0, -2) + '…'
+      }
+      ctx.fillText(name, 48, ry)
+      ctx.textAlign = 'right'
+      ctx.font = `600 14px ${mono}`
+      ctx.fillStyle = INK
+      ctx.fillText(`$ ${fmt(it.amount)}`, W - 48, ry)
+      ctx.textAlign = 'left'
+    })
+    amountsTop = serviceBottom + itemsH
+    ctx.strokeStyle = LINE
+    ctx.beginPath()
+    ctx.moveTo(48, amountsTop)
+    ctx.lineTo(W - 48, amountsTop)
+    ctx.stroke()
+  }
+
+  // amounts in USD
   ctx.font = `500 11px ${mono}`
   ctx.fillStyle = MUTED
-  ctx.fillText(t('quote.amount'), 48, serviceBottom + 36)
+  ctx.fillText(t('quote.amount'), 48, amountsTop + 36)
   ctx.font = `600 40px ${mono}`
   ctx.fillStyle = INK
-  ctx.fillText(`$ ${fmt(d.amountUSD)}`, 48, serviceBottom + 80)
+  ctx.fillText(`$ ${fmt(d.amountUSD)}`, 48, amountsTop + 80)
 
   const usd = d.rateBs <= 1
   const cur = usd ? '$' : 'Bs.'
@@ -108,11 +139,11 @@ const draw = (canvas: HTMLCanvasElement, d: QuoteData, t: TFn, locale: string) =
   ctx.fillStyle = MUTED
   ctx.fillText(
     usd ? t('quote.usdNote') : t('quote.fxNote', { r: fmt(d.rateBs) }),
-    48, serviceBottom + 112,
+    48, amountsTop + 112,
   )
 
   // breakdown box
-  const boxY = serviceBottom + 140
+  const boxY = amountsTop + 140
   ctx.fillStyle = '#FFFFFF'
   ctx.strokeStyle = LINE
   ctx.beginPath()
@@ -181,20 +212,23 @@ export default function QuoteModal({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    draw(canvas, data, t, dateLocale(lang))
-    setReady(true)
+    // esperar las webfonts para que el PNG no salga con la fuente de fallback
+    let cancelled = false
+    const render = () => {
+      if (cancelled) return
+      draw(canvas, data, t, dateLocale(lang))
+      setReady(true)
+    }
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(render)
+    } else {
+      render()
+    }
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, lang])
-
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', onEsc)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onEsc)
-      document.body.style.overflow = ''
-    }
-  }, [onClose])
 
   const download = () => {
     const canvas = canvasRef.current
@@ -207,39 +241,21 @@ export default function QuoteModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-paper shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <p className="font-grotesk text-lg font-bold tracking-tight">{t('quote.modalTitle')}</p>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-line hover:text-ink"
-            aria-label={t('ui.close')}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-5">
-          <canvas ref={canvasRef} className="w-full rounded-xl border border-line" />
-          <button
-            onClick={download}
-            disabled={!ready}
-            className="mt-5 w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
-            style={{ backgroundColor: ACCENT }}
-          >
-            {t('quote.download')}
-          </button>
-          <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
-            {t('quote.modalNote')}
-          </p>
-        </div>
+    <Modal title={t('quote.modalTitle')} onClose={onClose}>
+      <div className="overflow-y-auto p-5">
+        <canvas ref={canvasRef} className="w-full rounded-xl border border-line" />
+        <button
+          onClick={download}
+          disabled={!ready}
+          className="mt-5 w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-30"
+          style={{ backgroundColor: ACCENT }}
+        >
+          {t('quote.download')}
+        </button>
+        <p className="mt-3 text-center font-mono text-[11px] text-inkmuted">
+          {t('quote.modalNote')}
+        </p>
       </div>
-    </div>
+    </Modal>
   )
 }

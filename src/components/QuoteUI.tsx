@@ -8,15 +8,18 @@ export function NumInput({
   placeholder = '0',
   dark = false,
   align = 'left',
+  id,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
   dark?: boolean
   align?: 'left' | 'right'
+  id?: string
 }) {
   return (
     <input
+      id={id}
       type="text"
       inputMode="decimal"
       value={value}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from '@/components/Modal'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
@@ -221,16 +222,23 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    drawTicket(canvas, data, t, dateLocale(lang))
-    setUrl(canvas.toDataURL('image/png'))
+    // esperar las webfonts para que el PNG no salga con la fuente de fallback
+    let cancelled = false
+    const render = () => {
+      if (cancelled) return
+      drawTicket(canvas, data, t, dateLocale(lang))
+      setUrl(canvas.toDataURL('image/png'))
+    }
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(render)
+    } else {
+      render()
+    }
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, lang])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
 
   const download = () => {
     const a = document.createElement('a')
@@ -241,42 +249,24 @@ export function TicketModal({ data, onClose }: { data: TicketData; onClose: () =
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
+    <Modal
+      title={t('ticket.modalTitle')}
+      subtitle={t('ticket.modalNote')}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      footer={
+        <button
+          onClick={download}
+          className="w-full rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          style={{ backgroundColor: ACCENT }}
+        >
+          {t('ticket.download')}
+        </button>
+      }
     >
-      <div
-        className="w-full max-w-2xl overflow-hidden rounded-3xl bg-paper shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-6 py-4">
-          <div>
-            <h3 className="font-grotesk text-lg font-bold">{t('ticket.modalTitle')}</h3>
-            <p className="text-xs text-inkmuted">{t('ticket.modalNote')}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-inkmuted transition-colors hover:bg-paper hover:text-ink"
-            aria-label={t('ui.close')}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="max-h-[60vh] overflow-y-auto bg-paper p-6">
-          <canvas ref={canvasRef} className="mx-auto w-full max-w-md rounded-xl shadow-lg" />
-        </div>
-
-        <div className="border-t border-line p-4">
-          <button
-            onClick={download}
-            className="w-full rounded-full py-3.5 font-grotesk text-sm font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            style={{ backgroundColor: ACCENT }}
-          >
-            {t('ticket.download')}
-          </button>
-        </div>
+      <div className="max-h-[60vh] overflow-y-auto bg-paper p-6">
+        <canvas ref={canvasRef} className="mx-auto w-full max-w-md rounded-xl shadow-lg" />
       </div>
-    </div>
+    </Modal>
   )
 }

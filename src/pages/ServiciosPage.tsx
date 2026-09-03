@@ -12,6 +12,7 @@ import { TOOLS } from '@/lib/tools'
 import { VAT_COUNTRIES } from '@/lib/vat'
 import { fmt } from '@/lib/format'
 import { useBaseRate } from '@/hooks/useBaseRate'
+import { useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
 
 const tool = TOOLS[4]
@@ -23,13 +24,15 @@ type ModelId = 'horas' | 'paquete' | 'valor' | 'retainer'
 let uid = 1
 const nextId = () => uid++
 
+/* labels are i18n keys, resolved with t() at render time */
 const COMPLEXITY = [
-  { value: '0.8', label: 'Simple ×0,8' },
-  { value: '1', label: 'Normal ×1,0' },
-  { value: '1.2', label: 'Exigente ×1,2' },
-  { value: '1.5', label: 'Complejo ×1,5' },
+  { value: '0.8', label: 'sv.cx1' },
+  { value: '1', label: 'sv.cx2' },
+  { value: '1.2', label: 'sv.cx3' },
+  { value: '1.5', label: 'sv.cx4' },
 ]
 
+/* name/short/desc/best are i18n keys, resolved with t() at render time */
 const MODELS: {
   id: ModelId
   num: string
@@ -42,37 +45,37 @@ const MODELS: {
   {
     id: 'horas',
     num: 'A',
-    name: 'Por horas y fases',
-    short: 'Por horas',
-    desc: 'Desglosa el proyecto en fases con horas estimadas y complejidad.',
-    best: 'Proyectos a medida con alcance variable',
+    name: 'sv.m.horas.name',
+    short: 'sv.m.horas.short',
+    desc: 'sv.m.horas.desc',
+    best: 'sv.m.horas.best',
     icon: <IconClock />,
   },
   {
     id: 'paquete',
     num: 'B',
-    name: 'Precio por paquete',
-    short: 'Paquetes',
-    desc: 'Ofrece hasta 3 opciones cerradas; el cliente elige la suya.',
-    best: 'Servicios repetibles y productizados',
+    name: 'sv.m.paquete.name',
+    short: 'sv.m.paquete.short',
+    desc: 'sv.m.paquete.desc',
+    best: 'sv.m.paquete.best',
     icon: <IconBox />,
   },
   {
     id: 'valor',
     num: 'C',
-    name: 'Por valor generado',
-    short: 'Por valor',
-    desc: 'Precio anclado al impacto que generas, no a tus horas.',
-    best: 'Proyectos con retorno medible para el cliente',
+    name: 'sv.m.valor.name',
+    short: 'sv.m.valor.short',
+    desc: 'sv.m.valor.desc',
+    best: 'sv.m.valor.best',
     icon: <IconGem />,
   },
   {
     id: 'retainer',
     num: 'D',
-    name: 'Retainer mensual',
-    short: 'Retainer',
-    desc: 'Bloque de horas mensual recurrente con descuento por fidelidad.',
-    best: 'Clientes fijos y trabajo continuo',
+    name: 'sv.m.retainer.name',
+    short: 'sv.m.retainer.short',
+    desc: 'sv.m.retainer.desc',
+    best: 'sv.m.retainer.best',
     icon: <IconRepeat />,
   },
 ]
@@ -102,19 +105,26 @@ type QuotePayload = {
   retMonths: string
 }
 
-const DEFAULT_PHASES: Phase[] = [
-  { id: nextId(), name: 'Investigación y brief', hours: '4', factor: '1' },
-  { id: nextId(), name: 'Diseño / desarrollo', hours: '20', factor: '1' },
-  { id: nextId(), name: 'Revisiones y ajustes', hours: '6', factor: '1.2' },
+/* Los nombres por defecto se generan con el idioma activo al crear la cotización;
+   una vez guardados en localStorage son datos del usuario. */
+type TFn = ReturnType<typeof useT>
+
+const defaultPhases = (t: TFn): Phase[] => [
+  { id: nextId(), name: t('sv.d.phase1'), hours: '4', factor: '1' },
+  { id: nextId(), name: t('sv.d.phase2'), hours: '20', factor: '1' },
+  { id: nextId(), name: t('sv.d.phase3'), hours: '6', factor: '1.2' },
 ]
 
-const DEFAULT_TIERS: Tier[] = [
-  { id: nextId(), name: 'Básico', price: '300', features: ['Entrega en 7 días', '1 revisión'], hours: '15' },
-  { id: nextId(), name: 'Estándar', price: '550', features: ['Entrega en 10 días', '3 revisiones', 'Soporte 15 días'], hours: '25' },
-  { id: nextId(), name: 'Premium', price: '900', features: ['Entrega prioritaria', 'Revisiones ilimitadas', 'Soporte 30 días'], hours: '40' },
+const defaultCosts = (t: TFn): Cost[] => [{ id: nextId(), name: t('sv.d.cost'), amount: '30' }]
+
+const defaultTiers = (t: TFn): Tier[] => [
+  { id: nextId(), name: t('sv.d.tier1'), price: '300', features: [t('sv.d.f1'), t('sv.d.f2')], hours: '15' },
+  { id: nextId(), name: t('sv.d.tier2'), price: '550', features: [t('sv.d.f3'), t('sv.d.f4'), t('sv.d.f5')], hours: '25' },
+  { id: nextId(), name: t('sv.d.tier3'), price: '900', features: [t('sv.d.f6'), t('sv.d.f7'), t('sv.d.f8')], hours: '40' },
 ]
 
 export default function ServiciosPage() {
+  const t = useT()
   const [model, setModel] = useState<ModelId>('horas')
   const [countryCode, setCountryCode] = useState('VE')
   const [showQuote, setShowQuote] = useState(false)
@@ -124,8 +134,8 @@ export default function ServiciosPage() {
   const country = VAT_COUNTRIES.find((c) => c.code === countryCode)!
 
   /* ——— MODELO A: horas ——— */
-  const [phases, setPhases] = useState<Phase[]>(DEFAULT_PHASES)
-  const [costs, setCosts] = useState<Cost[]>([{ id: nextId(), name: 'Suscripciones / plugins', amount: '30' }])
+  const [phases, setPhases] = useState<Phase[]>(() => defaultPhases(t))
+  const [costs, setCosts] = useState<Cost[]>(() => defaultCosts(t))
   const [risk, setRisk] = useState('10')
   const [profit, setProfit] = useState('20')
 
@@ -153,7 +163,7 @@ export default function ServiciosPage() {
   }, [phases, costs, risk, profit, base.rate, country.rate])
 
   /* ——— MODELO B: paquetes ——— */
-  const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS)
+  const [tiers, setTiers] = useState<Tier[]>(() => defaultTiers(t))
   const [pkgCosts, setPkgCosts] = useState('30')
 
   const paquete = useMemo(() => {
@@ -218,27 +228,29 @@ export default function ServiciosPage() {
   const quoteForCurrent = () => {
     if (model === 'horas') {
       openQuote({
-        service: `Proyecto por fases — ${fmt(horas.totalHours, 1)} horas estimadas`,
+        service: t('sv.q.horas', { h: fmt(horas.totalHours, 1) }),
         amountUSD: horas.net, rateBs: 1, subtotalBs: horas.net,
         taxBs: horas.tax, totalBs: horas.total, taxName: country.taxName, taxRate: country.rate,
       })
     } else if (model === 'paquete') {
-      const t = paquete[1] ?? paquete[0] // Estándar o el primero
-      if (!t) return
+      const tier = paquete[1] ?? paquete[0] // Estándar o el primero
+      if (!tier) return
       openQuote({
-        service: `Paquete ${t.name} — ${t.features.join(' · ')}`,
-        amountUSD: t.priceNum, rateBs: 1, subtotalBs: t.priceNum,
-        taxBs: t.tax, totalBs: t.total, taxName: country.taxName, taxRate: country.rate,
+        service: t('sv.q.paquete', { name: tier.name, feat: tier.features.join(' · ') }),
+        amountUSD: tier.priceNum, rateBs: 1, subtotalBs: tier.priceNum,
+        taxBs: tier.tax, totalBs: tier.total, taxName: country.taxName, taxRate: country.rate,
       })
     } else if (model === 'valor') {
       openQuote({
-        service: 'Proyecto cotizado por valor generado',
+        service: t('sv.q.valor'),
         amountUSD: valor.price, rateBs: 1, subtotalBs: valor.price,
         taxBs: valor.tax, totalBs: valor.total, taxName: country.taxName, taxRate: country.rate,
       })
     } else {
       openQuote({
-        service: `Retainer mensual — ${fmt(retainer.hours, 0)} horas/mes${retainer.months > 0 ? ` × ${retainer.months} meses` : ''}`,
+        service: retainer.months > 0
+          ? t('sv.q.retainer', { h: fmt(retainer.hours, 0), m: retainer.months })
+          : t('sv.q.retainerShort', { h: fmt(retainer.hours, 0) }),
         amountUSD: retainer.monthly, rateBs: 1, subtotalBs: retainer.monthly,
         taxBs: retainer.tax, totalBs: retainer.total, taxName: country.taxName, taxRate: country.rate,
       })
@@ -282,9 +294,9 @@ export default function ServiciosPage() {
 
   const handleNew = () => {
     setModel('horas'); setCountryCode('VE')
-    setPhases(DEFAULT_PHASES); setCosts([{ id: nextId(), name: 'Suscripciones / plugins', amount: '30' }])
+    setPhases(defaultPhases(t)); setCosts(defaultCosts(t))
     setRisk('10'); setProfit('20')
-    setTiers(DEFAULT_TIERS); setPkgCosts('30')
+    setTiers(defaultTiers(t)); setPkgCosts('30')
     setImpact('5000'); setShare('15'); setValHours('20'); setValCosts('30'); setValPrice('')
     setRetHours('20'); setRetDiscount('10'); setRetMonths('6')
     setOpenDocId(null)
@@ -306,10 +318,10 @@ export default function ServiciosPage() {
     : retainer.total
 
   const currentLabel =
-    model === 'horas' ? 'Precio total del proyecto'
-    : model === 'paquete' ? 'Paquete recomendado'
-    : model === 'valor' ? 'Precio del proyecto'
-    : 'Mensualidad del retainer'
+    model === 'horas' ? t('sv.lbl.horas')
+    : model === 'paquete' ? t('sv.lbl.paquete')
+    : model === 'valor' ? t('sv.lbl.valor')
+    : t('sv.lbl.retainer')
 
   return (
     <BrandShell tool={tool}>
@@ -325,13 +337,13 @@ export default function ServiciosPage() {
             onDuplicate={duplicate}
             onDelete={handleDelete}
             onNew={handleNew}
-            saveLabel="Guardar cotización"
-            listLabel="Cotizaciones guardadas"
-            placeholder="Ej. Cliente X — rediseño web"
+            saveLabel={t('sv.saveLabel')}
+            listLabel={t('sv.listLabel')}
+            placeholder={t('docs.placeholder')}
           />
           {docName && openDocId && (
             <p className="mt-2 font-mono text-[11px] text-inkmuted">
-              Editando: <span className="font-semibold text-inksoft">{docName}</span> — los cambios no se guardan solos; pulsa «Guardar cambios».
+              {t('docs.editing')} <span className="font-semibold text-inksoft">{docName}</span> {t('docs.unsaved')}
             </p>
           )}
         </div>
@@ -340,7 +352,7 @@ export default function ServiciosPage() {
       {/* ————— MODEL SELECTOR ————— */}
       <section className="border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-10 md:px-8">
-          <p className="field-label">Elige tu modelo de cotización — el que mejor se adapte a tu servicio</p>
+          <p className="field-label">{t('sv.pick')}</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {MODELS.map((m) => {
               const active = model === m.id
@@ -366,12 +378,12 @@ export default function ServiciosPage() {
                       {m.num}
                     </span>
                   </div>
-                  <p className="mt-4 font-grotesk text-base font-bold tracking-tight">{m.name}</p>
+                  <p className="mt-4 font-grotesk text-base font-bold tracking-tight">{t(m.name)}</p>
                   <p className={`mt-1 text-[13px] leading-snug ${active ? 'text-white/60' : 'text-inksoft'}`}>
-                    {m.desc}
+                    {t(m.desc)}
                   </p>
                   <p className={`mt-3 font-mono text-[10px] uppercase tracking-wider ${active ? 'text-white/40' : 'text-inkmuted'}`}>
-                    → {m.best}
+                    → {t(m.best)}
                   </p>
                 </button>
               )
@@ -384,23 +396,24 @@ export default function ServiciosPage() {
         {/* ————— LEFT: model workspace ————— */}
         <div>
           {/* shared: base rate + tax */}
-          <Step n="01" icon={<IconWallet />} title="Tu tarifa base y tu país">
+          <Step n="01" icon={<IconWallet />} title={t('sv.base')}>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="field-label">Ingreso mensual deseado ($)</label>
-                <NumInput value={base.monthlyGoal} onChange={base.setMonthlyGoal} />
+                <label className="field-label" htmlFor="sv-monthly-goal">{t('sv.income')}</label>
+                <NumInput id="sv-monthly-goal" value={base.monthlyGoal} onChange={base.setMonthlyGoal} />
               </div>
               <div>
-                <label className="field-label">Horas facturables / semana</label>
-                <NumInput value={base.billableHours} onChange={base.setBillableHours} />
+                <label className="field-label" htmlFor="sv-billable-hours">{t('sv.billable')}</label>
+                <NumInput id="sv-billable-hours" value={base.billableHours} onChange={base.setBillableHours} />
               </div>
               <div>
-                <label className="field-label">Tarifa / hora (opcional)</label>
-                <NumInput value={base.rateOverride} onChange={base.setRateOverride} placeholder={fmt(base.baseRate)} />
+                <label className="field-label" htmlFor="sv-rate-override">{t('sv.rateOverride')}</label>
+                <NumInput id="sv-rate-override" value={base.rateOverride} onChange={base.setRateOverride} placeholder={fmt(base.baseRate)} />
               </div>
               <div>
-                <label className="field-label">Impuesto del país</label>
+                <label className="field-label" htmlFor="sv-country-tax">{t('sv.countryTax')}</label>
                 <select
+                  id="sv-country-tax"
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
                   className="field-box font-mono text-sm"
@@ -412,41 +425,41 @@ export default function ServiciosPage() {
               </div>
             </div>
             <p className="mt-4 font-mono text-xs text-inkmuted">
-              → Tarifa sugerida: <span className="font-semibold text-ink">${fmt(base.rate)}/hora</span>
-              {base.rateOverride && ' (personalizada)'} · calculada con 4,33 semanas/mes
+              {t('sv.suggestedRate')} <span className="font-semibold text-ink">${fmt(base.rate)}{t('sv.perHour')}</span>
+              {base.rateOverride && t('sv.customized')}{t('sv.weeksNote')}
             </p>
           </Step>
 
           {/* ————— MODELO A ————— */}
           {model === 'horas' && (
             <>
-              <Step n="02" icon={<IconStack />} title="Fases del proyecto" right={<span className="font-mono text-xs text-inkmuted">{fmt(horas.effHours, 1)} h efectivas</span>}>
+              <Step n="02" icon={<IconStack />} title={t('sv.phases')} right={<span className="font-mono text-xs text-inkmuted">{fmt(horas.effHours, 1)} {t('sv.effHours')}</span>}>
                 <div className="space-y-4">
                   {phases.map((p) => (
                     <div key={p.id} className="grid grid-cols-[1fr_auto] items-end gap-3 sm:grid-cols-[1fr_90px_150px_auto_auto]">
                       <input
                         value={p.name}
                         onChange={(e) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))}
-                        placeholder="Nombre de la fase"
+                        placeholder={t('sv.phasePh')}
                         className="field-box py-2 text-sm"
                       />
                       <div>
-                        <label className="field-label sm:hidden">Horas</label>
-                        <NumInput value={p.hours} onChange={(v) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, hours: v } : x)))} />
+                        <label className="field-label sm:hidden" htmlFor={`sv-phase-${p.id}-hours`}>{t('sv.hours')}</label>
+                        <NumInput id={`sv-phase-${p.id}-hours`} value={p.hours} onChange={(v) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, hours: v } : x)))} />
                       </div>
                       <select
                         value={p.factor}
                         onChange={(e) => setPhases((prev) => prev.map((x) => (x.id === p.id ? { ...x, factor: e.target.value } : x)))}
                         className="field-box py-2 font-mono text-sm"
                       >
-                        {COMPLEXITY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        {COMPLEXITY.map((c) => <option key={c.value} value={c.value}>{t(c.label)}</option>)}
                       </select>
                       <span className="hidden py-1.5 font-mono text-sm tabular-nums text-inksoft sm:block">
                         ${fmt((parseFloat(p.hours.replace(',', '.')) || 0) * (parseFloat(p.factor.replace(',', '.')) || 1) * base.rate)}
                       </span>
                       <button
                         onClick={() => setPhases((prev) => prev.filter((x) => x.id !== p.id))}
-                        className="py-1.5 text-inkmuted hover:text-ink" aria-label="Eliminar fase"
+                        className="py-1.5 text-inkmuted hover:text-ink" aria-label={t('sv.delPhase')}
                       >✕</button>
                     </div>
                   ))}
@@ -455,24 +468,24 @@ export default function ServiciosPage() {
                   onClick={() => setPhases((prev) => [...prev, { id: nextId(), name: '', hours: '', factor: '1' }])}
                   className="mt-5 rounded-full border border-dashed border-inkmuted px-5 py-2 text-sm font-medium text-inksoft transition-colors hover:border-ink hover:text-ink"
                 >
-                  + Agregar fase
+                  {t('sv.addPhase')}
                 </button>
               </Step>
 
-              <Step n="03" icon={<IconReceipt />} title="Costos directos">
+              <Step n="03" icon={<IconReceipt />} title={t('sv.directCosts')}>
                 <div className="space-y-4">
                   {costs.map((c) => (
                     <div key={c.id} className="grid grid-cols-[1fr_auto] items-end gap-3 sm:grid-cols-[1fr_120px_auto]">
                       <input
                         value={c.name}
                         onChange={(e) => setCosts((prev) => prev.map((x) => (x.id === c.id ? { ...x, name: e.target.value } : x)))}
-                        placeholder="Ej. hosting, assets, transporte…"
+                        placeholder={t('sv.costPh')}
                         className="field-box py-2 text-sm"
                       />
                       <NumInput value={c.amount} onChange={(v) => setCosts((prev) => prev.map((x) => (x.id === c.id ? { ...x, amount: v } : x)))} />
                       <button
                         onClick={() => setCosts((prev) => prev.filter((x) => x.id !== c.id))}
-                        className="py-1.5 text-inkmuted hover:text-ink" aria-label="Eliminar costo"
+                        className="py-1.5 text-inkmuted hover:text-ink" aria-label={t('sv.delCost')}
                       >✕</button>
                     </div>
                   ))}
@@ -481,21 +494,21 @@ export default function ServiciosPage() {
                   onClick={() => setCosts((prev) => [...prev, { id: nextId(), name: '', amount: '' }])}
                   className="mt-5 rounded-full border border-dashed border-inkmuted px-5 py-2 text-sm font-medium text-inksoft transition-colors hover:border-ink hover:text-ink"
                 >
-                  + Agregar costo
+                  {t('sv.addCost')}
                 </button>
               </Step>
 
-              <Step n="04" icon={<IconShield />} title="Contingencia y margen">
+              <Step n="04" icon={<IconShield />} title={t('sv.contingency')}>
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="field-label">Contingencia / riesgo %</label>
-                    <NumInput value={risk} onChange={setRisk} />
-                    <p className="mt-1 font-mono text-[10px] text-inkmuted">cubre imprevistos y cambios de alcance</p>
+                    <label className="field-label" htmlFor="sv-risk">{t('sv.risk')}</label>
+                    <NumInput id="sv-risk" value={risk} onChange={setRisk} />
+                    <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.riskHint')}</p>
                   </div>
                   <div>
-                    <label className="field-label">Margen de ganancia %</label>
-                    <NumInput value={profit} onChange={setProfit} />
-                    <p className="mt-1 font-mono text-[10px] text-inkmuted">tu crecimiento como negocio</p>
+                    <label className="field-label" htmlFor="sv-profit">{t('sv.profit')}</label>
+                    <NumInput id="sv-profit" value={profit} onChange={setProfit} />
+                    <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.profitHint')}</p>
                   </div>
                 </div>
               </Step>
@@ -508,33 +521,33 @@ export default function ServiciosPage() {
               <Step
                 n="02"
                 icon={<IconBox />}
-                title="Define tus paquetes"
+                title={t('sv.pkgs')}
                 right={
                   <HealthPill
-                    ok={paquete.length ? paquete.every((t) => t.healthy) : null}
-                    okText="Márgenes saludables"
-                    badText="Algún paquete queda corto"
+                    ok={paquete.length ? paquete.every((p) => p.healthy) : null}
+                    okText={t('sv.marginsOk')}
+                    badText={t('sv.marginsBad')}
                   />
                 }
               >
                 <div className="grid gap-4 lg:grid-cols-3">
-                  {paquete.map((t, i) => (
-                    <div key={t.id} className={`rounded-2xl border p-5 ${i === 1 ? 'border-ink' : 'border-line'}`}>
+                  {paquete.map((pk, i) => (
+                    <div key={pk.id} className={`rounded-2xl border p-5 ${i === 1 ? 'border-ink' : 'border-line'}`}>
                       <div className="flex items-center justify-between">
                         <input
-                          value={t.name}
-                          onChange={(e) => setTiers((prev) => prev.map((x) => (x.id === t.id ? { ...x, name: e.target.value } : x)))}
+                          value={pk.name}
+                          onChange={(e) => setTiers((prev) => prev.map((x) => (x.id === pk.id ? { ...x, name: e.target.value } : x)))}
                           className="field-box w-32 px-3 py-1.5 font-grotesk text-base font-bold"
                         />
                         {i === 1 && (
                           <span className="rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold text-ink" style={{ backgroundColor: ACCENT }}>
-                            popular
+                            {t('sv.popular')}
                           </span>
                         )}
                         {tiers.length > 1 && (
                           <button
-                            onClick={() => setTiers((prev) => prev.filter((x) => x.id !== t.id))}
-                            className="text-inkmuted hover:text-ink" aria-label="Quitar paquete"
+                            onClick={() => setTiers((prev) => prev.filter((x) => x.id !== pk.id))}
+                            className="text-inkmuted hover:text-ink" aria-label={t('sv.delPkg')}
                           >✕</button>
                         )}
                       </div>
@@ -542,15 +555,15 @@ export default function ServiciosPage() {
                       <div className="relative mt-3">
                         <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-lg text-inkmuted">$</span>
                         <input
-                          type="text" inputMode="decimal" value={t.price}
-                          onChange={(e) => setTiers((prev) => prev.map((x) => (x.id === t.id ? { ...x, price: e.target.value } : x)))}
+                          type="text" inputMode="decimal" value={pk.price}
+                          onChange={(e) => setTiers((prev) => prev.map((x) => (x.id === pk.id ? { ...x, price: e.target.value } : x)))}
                           placeholder="0"
                           className="field-box tool-num py-2 pl-9 text-2xl font-semibold"
                         />
                       </div>
 
                       <div className="mt-4 space-y-2">
-                        {t.features.map((f, fi) => (
+                        {pk.features.map((f, fi) => (
                           <div key={fi} className="flex items-center gap-2">
                             <span style={{ color: STEP_COLOR }}><IconCheck /></span>
                             <input
@@ -558,7 +571,7 @@ export default function ServiciosPage() {
                               onChange={(e) =>
                                 setTiers((prev) =>
                                   prev.map((x) =>
-                                    x.id === t.id
+                                    x.id === pk.id
                                       ? { ...x, features: x.features.map((y, yi) => (yi === fi ? e.target.value : y)) }
                                       : x,
                                   ),
@@ -570,61 +583,61 @@ export default function ServiciosPage() {
                               onClick={() =>
                                 setTiers((prev) =>
                                   prev.map((x) =>
-                                    x.id === t.id ? { ...x, features: x.features.filter((_, yi) => yi !== fi) } : x,
+                                    x.id === pk.id ? { ...x, features: x.features.filter((_, yi) => yi !== fi) } : x,
                                   ),
                                 )
                               }
-                              className="text-inkmuted hover:text-ink" aria-label="Quitar característica"
+                              className="text-inkmuted hover:text-ink" aria-label={t('sv.delFeature')}
                             >✕</button>
                           </div>
                         ))}
                         <button
                           onClick={() =>
                             setTiers((prev) =>
-                              prev.map((x) => (x.id === t.id ? { ...x, features: [...x.features, ''] } : x)),
+                              prev.map((x) => (x.id === pk.id ? { ...x, features: [...x.features, ''] } : x)),
                             )
                           }
                           className="mt-1 font-mono text-[11px] text-inkmuted underline underline-offset-4 hover:text-ink"
                         >
-                          + característica
+                          {t('sv.addFeature')}
                         </button>
                       </div>
 
                       <div className="mt-4 border-t border-line pt-3">
-                        <label className="field-label">Horas que te toma</label>
-                        <NumInput value={t.hours} onChange={(v) => setTiers((prev) => prev.map((x) => (x.id === t.id ? { ...x, hours: v } : x)))} />
+                        <label className="field-label" htmlFor={`sv-tier-${pk.id}-hours`}>{t('sv.pkgHours')}</label>
+                        <NumInput id={`sv-tier-${pk.id}-hours`} value={pk.hours} onChange={(v) => setTiers((prev) => prev.map((x) => (x.id === pk.id ? { ...x, hours: v } : x)))} />
                       </div>
 
                       <div className="mt-4 rounded-xl bg-paper p-3 font-mono text-[11px] leading-relaxed">
-                        <p className="flex justify-between"><span className="text-inkmuted">Costo interno</span><span>${fmt(t.cost)}</span></p>
+                        <p className="flex justify-between"><span className="text-inkmuted">{t('sv.internalCost')}</span><span>${fmt(pk.cost)}</span></p>
                         <p className="flex justify-between">
-                          <span className="text-inkmuted">Margen</span>
-                          <span className={t.healthy ? 'text-emerald-600' : 'text-red-500'}>
-                            {fmt(t.marginPct, 0)}%
+                          <span className="text-inkmuted">{t('sv.margin')}</span>
+                          <span className={pk.healthy ? 'text-emerald-600' : 'text-red-500'}>
+                            {fmt(pk.marginPct, 0)}%
                           </span>
                         </p>
-                        <p className="flex justify-between"><span className="text-inkmuted">$/h efectivo</span><span>${fmt(t.effRate)}</span></p>
+                        <p className="flex justify-between"><span className="text-inkmuted">{t('sv.effRateH')}</span><span>${fmt(pk.effRate)}</span></p>
                       </div>
                     </div>
                   ))}
                 </div>
                 {tiers.length < 3 && (
                   <button
-                    onClick={() => setTiers((prev) => [...prev, { id: nextId(), name: 'Nuevo', price: '', features: [''], hours: '' }])}
+                    onClick={() => setTiers((prev) => [...prev, { id: nextId(), name: t('sv.newPkg'), price: '', features: [''], hours: '' }])}
                     className="mt-5 rounded-full border border-dashed border-inkmuted px-5 py-2 text-sm font-medium text-inksoft transition-colors hover:border-ink hover:text-ink"
                   >
-                    + Agregar paquete
+                    {t('sv.addPkg')}
                   </button>
                 )}
               </Step>
 
-              <Step n="03" icon={<IconReceipt />} title="Costos directos por proyecto">
+              <Step n="03" icon={<IconReceipt />} title={t('sv.pkgCosts')}>
                 <div className="max-w-xs">
-                  <label className="field-label">Total en $ (herramientas, assets…)</label>
-                  <NumInput value={pkgCosts} onChange={setPkgCosts} />
+                  <label className="field-label" htmlFor="sv-pkg-costs">{t('sv.pkgCostsLabel')}</label>
+                  <NumInput id="sv-pkg-costs" value={pkgCosts} onChange={setPkgCosts} />
                 </div>
                 <p className="mt-3 font-mono text-[11px] leading-relaxed text-inkmuted">
-                  Se suma a tu costo de tiempo para verificar que cada paquete deje al menos 20% de margen.
+                  {t('sv.pkgCostsNote')}
                 </p>
               </Step>
             </>
@@ -633,29 +646,30 @@ export default function ServiciosPage() {
           {/* ————— MODELO C ————— */}
           {model === 'valor' && (
             <>
-              <Step n="02" icon={<IconTrend />} title="El impacto para tu cliente">
+              <Step n="02" icon={<IconTrend />} title={t('sv.impact')}>
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="field-label">Valor que generará el proyecto ($)</label>
-                    <NumInput value={impact} onChange={setImpact} />
+                    <label className="field-label" htmlFor="sv-impact-value">{t('sv.impactValue')}</label>
+                    <NumInput id="sv-impact-value" value={impact} onChange={setImpact} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
-                      ventas adicionales, ahorro de tiempo, ingresos esperados…
+                      {t('sv.impactHint')}
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">Tu participación del valor — {share}%</label>
+                    <label className="field-label" htmlFor="sv-share">{t('sv.share', { s: share })}</label>
                     <input
+                      id="sv-share"
                       type="range" min="5" max="30" value={share}
                       onChange={(e) => setShare(e.target.value)}
                       className="mt-3 w-full" style={{ accentColor: STEP_COLOR }}
                     />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
-                      lo habitual en value pricing: 10–20% del impacto
+                      {t('sv.shareHint')}
                     </p>
                   </div>
                 </div>
                 <div className="mt-6 rounded-2xl border border-line bg-paper p-5">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-inkmuted">Precio sugerido por valor</p>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-inkmuted">{t('sv.suggestedByValue')}</p>
                   <p className="tool-num mt-1 text-4xl font-semibold">${fmt(valor.suggested)}</p>
                 </div>
               </Step>
@@ -663,32 +677,32 @@ export default function ServiciosPage() {
               <Step
                 n="03"
                 icon={<IconTag />}
-                title="Tu precio final y verificación de costos"
-                right={<HealthPill ok={valor.price > 0 ? valor.healthy : null} okText="Margen saludable" badText="Por debajo de tus costos" />}
+                title={t('sv.finalPrice')}
+                right={<HealthPill ok={valor.price > 0 ? valor.healthy : null} okText={t('sv.marginOk')} badText={t('sv.marginBad')} />}
               >
                 <div className="grid gap-6 sm:grid-cols-3">
                   <div>
-                    <label className="field-label">Tu precio ($)</label>
-                    <NumInput value={valPrice} onChange={setValPrice} placeholder={fmt(valor.suggested, 0)} />
+                    <label className="field-label" htmlFor="sv-your-price">{t('sv.yourPrice')}</label>
+                    <NumInput id="sv-your-price" value={valPrice} onChange={setValPrice} placeholder={fmt(valor.suggested, 0)} />
                   </div>
                   <div>
-                    <label className="field-label">Horas estimadas</label>
-                    <NumInput value={valHours} onChange={setValHours} />
+                    <label className="field-label" htmlFor="sv-val-hours">{t('sv.estHours')}</label>
+                    <NumInput id="sv-val-hours" value={valHours} onChange={setValHours} />
                   </div>
                   <div>
-                    <label className="field-label">Costos directos ($)</label>
-                    <NumInput value={valCosts} onChange={setValCosts} />
+                    <label className="field-label" htmlFor="sv-val-costs">{t('sv.directCostsUsd')}</label>
+                    <NumInput id="sv-val-costs" value={valCosts} onChange={setValCosts} />
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap items-center gap-3 font-mono text-xs">
                   <span className="rounded-full bg-paper px-3 py-1.5 text-inksoft">
-                    Costo interno: ${fmt(valor.cost)}
+                    {t('sv.internalCost')}: ${fmt(valor.cost)}
                   </span>
                   <span className="rounded-full bg-paper px-3 py-1.5 text-inksoft">
-                    Margen: <span className={valor.healthy ? 'text-emerald-600' : 'text-red-500'}>{fmt(valor.marginPct, 0)}%</span>
+                    {t('sv.margin')}: <span className={valor.healthy ? 'text-emerald-600' : 'text-red-500'}>{fmt(valor.marginPct, 0)}%</span>
                   </span>
                   <span className="rounded-full bg-paper px-3 py-1.5 text-inksoft">
-                    ${fmt(valor.effRate)}/h efectivo
+                    {t('sv.effPill', { v: fmt(valor.effRate) })}
                   </span>
                 </div>
               </Step>
@@ -698,39 +712,38 @@ export default function ServiciosPage() {
           {/* ————— MODELO D ————— */}
           {model === 'retainer' && (
             <>
-              <Step n="02" icon={<IconRepeat />} title="El acuerdo mensual">
+              <Step n="02" icon={<IconRepeat />} title={t('sv.retAgreement')}>
                 <div className="grid gap-6 sm:grid-cols-3">
                   <div>
-                    <label className="field-label">Horas mensuales</label>
-                    <NumInput value={retHours} onChange={setRetHours} />
+                    <label className="field-label" htmlFor="sv-ret-hours">{t('sv.retHours')}</label>
+                    <NumInput id="sv-ret-hours" value={retHours} onChange={setRetHours} />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
-                      valor sin descuento: ${fmt(retainer.gross)}/mes
+                      {t('sv.retGross', { v: fmt(retainer.gross) })}
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">Descuento por fidelidad — {retDiscount}%</label>
+                    <label className="field-label" htmlFor="sv-ret-discount">{t('sv.retDiscount', { d: retDiscount })}</label>
                     <input
+                      id="sv-ret-discount"
                       type="range" min="0" max="25" value={retDiscount}
                       onChange={(e) => setRetDiscount(e.target.value)}
                       className="mt-3 w-full" style={{ accentColor: STEP_COLOR }}
                     />
                     <p className="mt-1 font-mono text-[10px] text-inkmuted">
-                      premia la recurrencia; lo habitual: 5–15%
+                      {t('sv.retDiscountHint')}
                     </p>
                   </div>
                   <div>
-                    <label className="field-label">Duración (meses)</label>
-                    <NumInput value={retMonths} onChange={setRetMonths} />
-                    <p className="mt-1 font-mono text-[10px] text-inkmuted">para proyectar el contrato total</p>
+                    <label className="field-label" htmlFor="sv-ret-months">{t('sv.retMonths')}</label>
+                    <NumInput id="sv-ret-months" value={retMonths} onChange={setRetMonths} />
+                    <p className="mt-1 font-mono text-[10px] text-inkmuted">{t('sv.retMonthsHint')}</p>
                   </div>
                 </div>
               </Step>
 
-              <Step n="03" icon={<IconSpark />} title="Qué incluye cada mes">
+              <Step n="03" icon={<IconSpark />} title={t('sv.retIncludes')}>
                 <p className="max-w-lg text-sm leading-relaxed text-inksoft">
-                  Define con tu cliente las entregas del bloque: por ejemplo mantenimiento,
-                  ajustes de diseño, reportes o soporte prioritario. Las horas no usadas
-                  no se acumulan al mes siguiente — escríbelo en el acuerdo.
+                  {t('sv.retIncludesText')}
                 </p>
               </Step>
             </>
@@ -740,37 +753,37 @@ export default function ServiciosPage() {
         {/* ————— RIGHT: sticky result ————— */}
         <aside className="border-t border-line lg:border-l lg:border-t-0">
           <div className="sticky top-14 px-5 py-10 md:px-8">
-            <p className="field-label">Resultado — {MODELS.find((m) => m.id === model)?.name}</p>
+            <p className="field-label">{t('sv.result', { model: t(MODELS.find((m) => m.id === model)?.name ?? '') })}</p>
 
             {/* breakdown per model */}
             <div className="mt-4 border-y border-line text-sm">
               {model === 'horas' && (
                 <>
-                  <Row label={`Mano de obra (${fmt(horas.rows.reduce((a, p) => a + p.h * p.f, 0), 1)} h efectivas)`} value={`$${fmt(horas.labor)}`} />
-                  <Row label="Costos directos" value={`$${fmt(horas.directCosts)}`} />
-                  <Row label={`Contingencia ${risk}%`} value={`$${fmt(horas.riskAmt)}`} />
-                  <Row label={`Margen ${profit}%`} value={`$${fmt(horas.profitAmt)}`} />
+                  <Row label={t('sv.labor', { h: fmt(horas.rows.reduce((a, p) => a + p.h * p.f, 0), 1) })} value={`$${fmt(horas.labor)}`} />
+                  <Row label={t('sv.directCosts')} value={`$${fmt(horas.directCosts)}`} />
+                  <Row label={t('sv.contingencyRow', { r: risk })} value={`$${fmt(horas.riskAmt)}`} />
+                  <Row label={t('sv.marginRow', { p: profit })} value={`$${fmt(horas.profitAmt)}`} />
                   <Row label={`${country.taxName} ${country.rate}%`} value={`$${fmt(horas.tax)}`} last />
                 </>
               )}
-              {model === 'paquete' && paquete.map((t) => (
+              {model === 'paquete' && paquete.map((pk) => (
                 <Row
-                  key={t.id}
-                  label={`${t.name}${t.healthy ? '' : ' ⚠'}`}
-                  value={`$${fmt(t.priceNum)} + ${country.taxName}`}
+                  key={pk.id}
+                  label={`${pk.name}${pk.healthy ? '' : ' ⚠'}`}
+                  value={`$${fmt(pk.priceNum)} + ${country.taxName}`}
                 />
               ))}
               {model === 'valor' && (
                 <>
-                  <Row label="Precio sugerido (valor)" value={`$${fmt(valor.suggested)}`} />
-                  <Row label="Tu precio" value={`$${fmt(valor.price)}`} />
+                  <Row label={t('sv.suggestedValueRow')} value={`$${fmt(valor.suggested)}`} />
+                  <Row label={t('sv.yourPriceRow')} value={`$${fmt(valor.price)}`} />
                   <Row label={`${country.taxName} ${country.rate}%`} value={`$${fmt(valor.tax)}`} last />
                 </>
               )}
               {model === 'retainer' && (
                 <>
                   <Row label={`${fmt(retainer.hours, 0)} h × $${fmt(base.rate)}`} value={`$${fmt(retainer.gross)}`} />
-                  <Row label={`Descuento ${retainer.discountPct}%`} value={`−$${fmt(retainer.gross - retainer.monthly)}`} />
+                  <Row label={t('sv.discountRow', { d: retainer.discountPct })} value={`−$${fmt(retainer.gross - retainer.monthly)}`} />
                   <Row label={`${country.taxName} ${country.rate}%`} value={`$${fmt(retainer.tax)}`} last />
                 </>
               )}
@@ -786,23 +799,23 @@ export default function ServiciosPage() {
               <div className="mt-4 space-y-1 border-t border-ink/15 pt-4 font-mono text-xs text-ink/80">
                 {model === 'horas' && (
                   <>
-                    <p>Piso mínimo aceptable: ${fmt(horas.min)}</p>
-                    <p>Tarifa efectiva: ${fmt(horas.effRate)}/h</p>
+                    <p>{t('sv.floor', { v: fmt(horas.min) })}</p>
+                    <p>{t('sv.effRate', { v: fmt(horas.effRate) })}</p>
                   </>
                 )}
                 {model === 'paquete' && (
-                  <p>El cliente elige su paquete — verifica que todos cubran tus costos</p>
+                  <p>{t('sv.pkgNote')}</p>
                 )}
                 {model === 'valor' && (
                   <>
-                    <p>Piso mínimo (costos): ${fmt(valor.min)}</p>
-                    <p>Margen: {fmt(valor.marginPct, 0)}% · ${fmt(valor.effRate)}/h</p>
+                    <p>{t('sv.floorCosts', { v: fmt(valor.min) })}</p>
+                    <p>{t('sv.margin')}: {fmt(valor.marginPct, 0)}% · ${fmt(valor.effRate)}/h</p>
                   </>
                 )}
                 {model === 'retainer' && (
                   <>
-                    <p>Tarifa efectiva: ${fmt(retainer.effRate)}/h</p>
-                    {retainer.months > 0 && <p>Contrato proyectado: ${fmt(retainer.contract)}</p>}
+                    <p>{t('sv.effRate', { v: fmt(retainer.effRate) })}</p>
+                    {retainer.months > 0 && <p>{t('sv.contract', { v: fmt(retainer.contract) })}</p>}
                   </>
                 )}
               </div>
@@ -813,14 +826,13 @@ export default function ServiciosPage() {
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-ink py-3.5 text-sm font-semibold transition-colors hover:bg-ink hover:text-paper"
             >
               <IconReceipt className="h-4 w-4" />
-              Generar orden de servicio
+              {t('iva.generate')}
             </button>
 
             <div className="mt-5 flex items-start gap-2 font-mono text-[11px] leading-relaxed text-inkmuted">
               <span className="mt-0.5 shrink-0"><IconWarn className="h-3.5 w-3.5" /></span>
               <p>
-                Los montos en la orden se muestran en dólares. Para el equivalente en bolívares,
-                usa el modo avanzado de la calculadora de IVA con la tasa BCV del día.
+                {t('sv.warn')}
               </p>
             </div>
           </div>
