@@ -94,14 +94,14 @@ const STRINGS: Record<string, { es: string; en: string }> = {
   'home.chip1': { es: 'Sin registro', en: 'No sign-up' },
   'home.chip2': { es: 'Sin instalación', en: 'Nothing to install' },
   'home.chip3': {
-    es: 'Tus datos no salen del navegador',
-    en: 'Your data never leaves your browser',
+    es: 'Tus archivos no salen del navegador',
+    en: 'Your files never leave your browser',
   },
   'home.indexCta': { es: 'Selecciona una herramienta ↓', en: 'Pick a tool ↓' },
   'home.note': { es: '[ Nota ]', en: '[ Note ]' },
   'home.noteText': {
-    es: 'Todo corre en tu navegador. Las tasas de cambio se consultan en vivo desde fuentes públicas; el resto de herramientas procesan tus datos localmente — nada se sube a ningún servidor.',
-    en: 'Everything runs in your browser. Exchange rates are fetched live from public sources; every other tool processes your data locally — nothing is uploaded to any server.',
+    es: 'Todo corre en tu navegador. Las tasas de cambio se consultan en vivo desde fuentes públicas; el resto de herramientas procesan tus datos localmente — tus montos, imágenes y documentos nunca se suben a ningún servidor. Usamos analítica anónima de uso (sin grabar lo que escribes) para mejorar las herramientas.',
+    en: 'Everything runs in your browser. Exchange rates are fetched live from public sources; every other tool processes your data locally — your amounts, images and documents are never uploaded to any server. We use anonymous usage analytics (never recording what you type) to improve the tools.',
   },
 
   /* ——— Documentos guardados (SavedDocsPanel) ——— */

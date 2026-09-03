@@ -110,6 +110,9 @@ export default function QrPage() {
       errorCorrectionLevel: logo ? 'H' : 'M',
     })
       .then(() => {
+        // qrcode fija width/height inline en px y pisa el w-full responsivo
+        canvas.style.width = ''
+        canvas.style.height = ''
         setError('')
         if (logo) drawLogo(canvas, logo)
       })

@@ -142,7 +142,7 @@ export function Header({ current }: { current: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 md:px-8">
-        <a href="#/" className="group flex items-center gap-2.5">
+        <a href="/" className="group flex items-center gap-2.5">
           <BrandMark className="h-8 w-8 transition-transform group-hover:scale-105" />
           <span className="font-grotesk text-lg font-bold tracking-tight">Tool Kit</span>
         </a>
@@ -311,7 +311,7 @@ export function Footer() {
 
       {/* Fila superior: iso + nombre, y firma */}
       <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-5 pt-12 md:flex-row md:items-center md:justify-between md:px-8">
-        <a href="#/" className="group flex items-center gap-4">
+        <a href="/" className="group flex items-center gap-4">
           <BrandMark className="h-12 w-12 transition-transform duration-300 group-hover:rotate-[8deg]" />
           <span className="font-grotesk text-3xl font-bold tracking-tighter">Tool Kit</span>
         </a>

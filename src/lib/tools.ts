@@ -18,7 +18,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'iva',
     num: '01',
-    path: '#/iva',
+    path: '/iva',
     name: 'Calculadora de IVA',
     nameEn: 'VAT Calculator',
     shortName: 'IVA',
@@ -31,7 +31,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'tasas',
     num: '02',
-    path: '#/tasas',
+    path: '/tasas',
     name: 'Conversor de Tasas',
     nameEn: 'Exchange Rates',
     shortName: 'Tasas',
@@ -44,7 +44,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'imagenes',
     num: '03',
-    path: '#/imagenes',
+    path: '/imagenes',
     name: 'Optimizador de Imágenes',
     nameEn: 'Image Optimizer',
     shortName: 'Imágenes',
@@ -57,7 +57,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'qr',
     num: '04',
-    path: '#/qr',
+    path: '/qr',
     name: 'Generador de QR',
     nameEn: 'QR Generator',
     shortName: 'QR',
@@ -70,7 +70,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'servicios',
     num: '05',
-    path: '#/servicios',
+    path: '/servicios',
     name: 'Cotizador de Servicios',
     nameEn: 'Service Quote Builder',
     shortName: 'Cotizador',
@@ -83,7 +83,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'acuerdo',
     num: '06',
-    path: '#/acuerdo',
+    path: '/acuerdo',
     name: 'Acuerdo de Servicios',
     nameEn: 'Service Agreement',
     shortName: 'Acuerdo',
@@ -96,7 +96,7 @@ export const TOOLS: Tool[] = [
   {
     id: 'texto',
     num: '07',
-    path: '#/texto',
+    path: '/texto',
     name: 'Texto para Redes',
     nameEn: 'Social Text Styler',
     shortName: 'Texto',

@@ -1,25 +1,28 @@
 import posthog from 'posthog-js'
 
-const projectToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
-const host = import.meta.env.VITE_PUBLIC_POSTHOG_HOST
-const isDevelopment = import.meta.env.DEV
+// Acepta ambos nombres de variable (el proyecto de Vercel usa _KEY);
+// el host por defecto es PostHog Cloud US.
+const projectToken =
+  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN ||
+  import.meta.env.VITE_PUBLIC_POSTHOG_KEY
+const host = import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
 
 if (!projectToken) {
-  if (isDevelopment) {
+  if (import.meta.env.DEV) {
     console.warn(
-      'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed.',
-    )
-  }
-} else if (!host) {
-  if (isDevelopment) {
-    console.warn(
-      'VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed.',
+      'PostHog sin configurar (falta VITE_PUBLIC_POSTHOG_PROJECT_TOKEN o VITE_PUBLIC_POSTHOG_KEY): los eventos no se registran.',
     )
   }
 } else {
   posthog.init(projectToken, {
     api_host: host,
     defaults: '2026-01-30',
+    // Analítica de uso, no de contenido: nunca grabamos sesiones ni el
+    // texto que el usuario escribe (montos, clientes, documentos).
+    disable_session_recording: true,
+    autocapture: {
+      element_allowlist: ['a', 'button'],
+    },
   })
 }
 
