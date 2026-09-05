@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
+import ProTeaser from '@/components/ProTeaser'
 import { TOOLS } from '@/lib/tools'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
@@ -151,6 +152,9 @@ export default function TasasPage() {
               {t('tasas.reset')}
             </button>
           )}
+          <div className="mt-6 max-w-md">
+            <ProTeaser feature="rate_alerts" tool="tasas" accent={ACCENT} />
+          </div>
         </div>
       </section>
 

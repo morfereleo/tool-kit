@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
   plugins: [...(mode === 'development' ? [inspectAttr()] : []), react()],
   server: {
     port: 3000,
+    // en dev, las functions de /api corren aparte con `vercel dev --listen 4400`
+    proxy: {
+      '/api': 'http://localhost:4400',
+    },
   },
   resolve: {
     alias: {

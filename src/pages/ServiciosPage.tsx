@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
+import ProTeaser from '@/components/ProTeaser'
 import QuoteModal, { type QuoteData } from '@/components/QuoteModal'
 import SavedDocsPanel from '@/components/SavedDocsPanel'
 import { useSavedDocuments } from '@/hooks/useSavedDocuments'
@@ -828,6 +829,10 @@ export default function ServiciosPage() {
               <IconReceipt className="h-4 w-4" />
               {t('iva.generate')}
             </button>
+
+            <div className="mt-4">
+              <ProTeaser feature="proposal_link" tool="servicios" accent={ACCENT} />
+            </div>
 
             <div className="mt-5 flex items-start gap-2 font-mono text-[11px] leading-relaxed text-inkmuted">
               <span className="mt-0.5 shrink-0"><IconWarn className="h-3.5 w-3.5" /></span>

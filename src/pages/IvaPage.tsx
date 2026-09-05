@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import InfoNote from '@/components/InfoNote'
+import ProTeaser from '@/components/ProTeaser'
 import QuoteModal, { type QuoteData } from '@/components/QuoteModal'
 import { TOOLS } from '@/lib/tools'
 import { VAT_COUNTRIES, vatCountryName, vatTaxName } from '@/lib/vat'
@@ -901,6 +902,10 @@ export default function IvaPage() {
 
               <div className="px-2">
                 <KeypadToggle open={keypadOpen} onToggle={() => setKeypadOpen(!keypadOpen)} />
+              </div>
+
+              <div className="mt-5">
+                <ProTeaser feature="branding" tool="iva" accent={ACCENT} />
               </div>
             </div>
 

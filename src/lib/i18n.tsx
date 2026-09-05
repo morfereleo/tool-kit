@@ -104,6 +104,42 @@ const STRINGS: Record<string, { es: string; en: string }> = {
     en: 'Everything runs in your browser. Exchange rates are fetched live from public sources; every other tool processes your data locally — your amounts, images and documents are never uploaded to any server. We use anonymous usage analytics (never recording what you type) to improve the tools.',
   },
 
+  /* ——— Pro (paywalls de interés + lista de espera) ——— */
+  'pro.badge': { es: 'Pro', en: 'Pro' },
+  'pro.soon': { es: 'Próximamente', en: 'Coming soon' },
+  'pro.cta': { es: 'Avísame cuando esté listo', en: 'Notify me at launch' },
+  'pro.email': { es: 'Tu correo', en: 'Your email' },
+  'pro.emailPh': { es: 'tu@correo.com', en: 'you@email.com' },
+  'pro.note': { es: 'Sin spam: un solo correo cuando se lance.', en: 'No spam — a single email at launch.' },
+  'pro.joined': { es: '✓ Estás en la lista — te avisaremos', en: "✓ You're on the list — we'll let you know" },
+  'pro.already': { es: 'Ya estabas en la lista para esta función ✓', en: 'You were already on the list for this ✓' },
+  'pro.error': { es: 'No se pudo guardar — intenta de nuevo', en: 'Could not save — try again' },
+  'pro.branding.t': { es: 'Órdenes con tu logo y en PDF', en: 'Orders with your logo, as PDF' },
+  'pro.branding.d': {
+    es: 'Tu logo, tus colores y tus datos en cada orden de servicio, con numeración automática y exportación en PDF además de PNG.',
+    en: 'Your logo, colors and business details on every service order, with automatic numbering and PDF export alongside PNG.',
+  },
+  'pro.proposal_link.t': { es: 'Envía tu cotización como link', en: 'Send your quote as a link' },
+  'pro.proposal_link.d': {
+    es: 'Una página con tu propuesta donde el cliente pulsa «Aceptar» — y tú ves el estado al instante: enviada, vista, aceptada.',
+    en: 'A page with your proposal where the client clicks “Accept” — and you see the status instantly: sent, viewed, accepted.',
+  },
+  'pro.esign.t': { es: 'Firma en línea del cliente', en: 'Client signs online' },
+  'pro.esign.d': {
+    es: 'Envía el acuerdo como link y ambas partes firman en línea, con constancia de fecha y aceptación.',
+    en: 'Send the agreement as a link and both parties sign online, with a dated record of acceptance.',
+  },
+  'pro.dynamic_qr.t': { es: 'QR dinámico con estadísticas', en: 'Dynamic QR with scan stats' },
+  'pro.dynamic_qr.d': {
+    es: 'Cambia el destino de tu QR después de imprimirlo y mide cuántos lo escanean, cuándo y desde dónde.',
+    en: 'Change where your QR points after printing, and track how many people scan it, when and from where.',
+  },
+  'pro.rate_alerts.t': { es: 'Alertas de tasa BCV', en: 'BCV rate alerts' },
+  'pro.rate_alerts.d': {
+    es: 'Te avisamos por correo cuando el dólar o el euro BCV crucen el umbral que tú definas.',
+    en: 'Get an email when the BCV dollar or euro crosses the threshold you set.',
+  },
+
   /* ——— Documentos guardados (SavedDocsPanel) ——— */
   'docs.save': { es: 'Guardar', en: 'Save' },
   'docs.saveChanges': { es: 'Guardar cambios', en: 'Save changes' },
