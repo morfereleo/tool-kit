@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { TOOLS } from '@/lib/tools'
 import { fmt, parseNum } from '@/lib/format'
 import BrandShell from '@/components/BrandShell'
+import ProTeaser from '@/components/ProTeaser'
 import SavedDocsPanel from '@/components/SavedDocsPanel'
 import { useSavedDocuments } from '@/hooks/useSavedDocuments'
 import { Step, NumInput, HealthPill } from '@/components/QuoteUI'
@@ -582,6 +583,9 @@ export default function AcuerdoPage() {
               >
                 {t('ac.ticket')}
               </button>
+            </div>
+            <div className="mt-4">
+              <ProTeaser feature="esign" tool="acuerdo" accent={ACCENT} />
             </div>
             <p className="mt-3 text-center font-mono text-[10px] leading-relaxed text-inkmuted">
               {t('ac.legalNote')}

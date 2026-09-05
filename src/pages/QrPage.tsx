@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import BrandShell from '@/components/BrandShell'
+import ProTeaser from '@/components/ProTeaser'
 import { TOOLS } from '@/lib/tools'
 import { useLang, useT } from '@/lib/i18n'
 import posthog from '@/lib/posthog'
@@ -417,6 +418,9 @@ export default function QrPage() {
           <p className="mt-4 font-mono text-[11px] leading-relaxed text-inkmuted">
             {t('qr.svgNote')}
           </p>
+          <div className="mt-5">
+            <ProTeaser feature="dynamic_qr" tool="qr" accent={ACCENT} />
+          </div>
         </div>
       </section>
     </BrandShell>
