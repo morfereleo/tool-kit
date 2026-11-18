@@ -4,6 +4,7 @@ import { useRoute } from '@/hooks/useRoute'
 import { useLang } from '@/lib/i18n'
 import { applySeo } from '@/lib/seo'
 import Home from '@/pages/Home'
+import NotFound from '@/pages/NotFound'
 
 // Cada herramienta se carga bajo demanda: la home no paga el peso de las 7.
 const IvaPage = lazy(() => import('@/pages/IvaPage'))
@@ -54,8 +55,11 @@ function App() {
     case '/texto':
       page = <TextoPage />
       break
-    default:
+    case '/':
       page = <Home />
+      break
+    default:
+      page = <NotFound />
   }
 
   return (

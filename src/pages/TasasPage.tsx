@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import BrandShell from '@/components/BrandShell'
 import ProTeaser from '@/components/ProTeaser'
 import { TOOLS } from '@/lib/tools'
 import { fmt } from '@/lib/format'
 import { dateLocale, useLang, useT } from '@/lib/i18n'
+import { applySeo, setSeoOverride } from '@/lib/seo'
+import { tasasSeo } from '@/lib/tasasSeo'
 import { useVeRates, type RateKey } from '@/hooks/useVeRates'
 import posthog from '@/lib/posthog'
 
@@ -25,6 +27,18 @@ export default function TasasPage() {
   const { lang } = useLang()
   const t = useT()
   const dl = dateLocale(lang)
+
+  // el título de la pestaña y los metadatos muestran la tasa del día,
+  // igual que el HTML que sirve api/tasas-page a los crawlers
+  useEffect(() => {
+    const usd = rates.USD_BCV
+    if (usd == null) return
+    setSeoOverride('/tasas', (l) =>
+      tasasSeo({ usd, eur: rates.EUR_BCV, date: updatedAt || new Date().toISOString(), lang: l }),
+    )
+    applySeo('/tasas', lang)
+    return () => setSeoOverride('/tasas', null)
+  }, [rates.USD_BCV, rates.EUR_BCV, updatedAt, lang])
 
   const prevLabel = prevAt
     ? new Date(prevAt).toLocaleDateString(dl, { day: '2-digit', month: 'short' })

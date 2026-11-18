@@ -6,6 +6,7 @@ export const SITE_URL = seoData.siteUrl
 type SeoEntry = {
   title: { es: string; en: string }
   desc: { es: string; en: string }
+  name: { es: string; en: string }
   image: string
 }
 
@@ -13,15 +14,32 @@ type SeoEntry = {
     La fuente de verdad es seo-data.json, compartida con scripts/prerender.mjs. */
 const SEO = seoData.routes as Record<string, SeoEntry>
 
+type Override = (lang: Lang) => { title: string; desc: string }
+
+/** Textos calculados en vivo (p. ej. la tasa del día en /tasas) que
+    reemplazan a los estáticos mientras la página los registre. */
+const overrides = new Map<string, Override>()
+
+export function setSeoOverride(path: string, fn: Override | null) {
+  if (fn) overrides.set(path, fn)
+  else overrides.delete(path)
+}
+
 const setMeta = (selector: string, content: string) => {
   document.querySelector(selector)?.setAttribute('content', content)
 }
 
 /** Actualiza título, descripción, canonical y og:* según la ruta y el idioma */
 export function applySeo(path: string, lang: Lang) {
-  const entry = SEO[path] ?? SEO['/']
-  const title = entry.title[lang]
-  const desc = entry.desc[lang]
+  const entry = SEO[path]
+  if (!entry) {
+    document.title = lang === 'es' ? 'Página no encontrada | AD·Tools' : 'Page not found | AD·Tools'
+    return
+  }
+  const { title, desc } = overrides.get(path)?.(lang) ?? {
+    title: entry.title[lang],
+    desc: entry.desc[lang],
+  }
   const url = `${SITE_URL}${path === '/' ? '/' : path}`
 
   document.title = title
