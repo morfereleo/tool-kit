@@ -104,6 +104,15 @@ const STRINGS: Record<string, { es: string; en: string }> = {
     en: 'Everything runs in your browser. Exchange rates are fetched live from public sources; every other tool processes your data locally — your amounts, images and documents are never uploaded to any server. We use anonymous usage analytics (never recording what you type) to improve the tools.',
   },
 
+  /* ——— 404 ——— */
+  'nf.kicker': { es: 'Error 404', en: 'Error 404' },
+  'nf.title': { es: 'Esta página no existe', en: 'This page does not exist' },
+  'nf.sub': {
+    es: 'Puede que el enlace esté mal escrito o que la página se haya movido. Estas son las herramientas disponibles:',
+    en: 'The link may be mistyped or the page may have moved. These are the available tools:',
+  },
+  'nf.home': { es: '← Volver al inicio', en: '← Back to home' },
+
   /* ——— Pro (paywalls de interés + lista de espera) ——— */
   'pro.badge': { es: 'Pro', en: 'Pro' },
   'pro.soon': { es: 'Próximamente', en: 'Coming soon' },
